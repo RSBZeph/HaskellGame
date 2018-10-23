@@ -8,7 +8,7 @@ import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
 import System.Random
 
---update die zooi
+--update ja man
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
 step secs gstate
