@@ -6,13 +6,9 @@ import Graphics.Gloss
 import Model
 
 view :: GameState -> IO Picture
-view = return . viewCharacter
-
-viewPure :: GameState -> Picture
-viewPure gstate = case infoToShow gstate of
-  ShowNothing   -> blank
-  ShowANumber n -> color green (text (show n))
-  ShowAChar   c -> color green (text [c])
+view gstate = return (pictures [viewenemies, viewcharacter])
+    where viewcharacter = viewCharacter gstate
+          viewenemies = viewEnemies gstate
 
 viewCharacter :: GameState -> Picture
 viewCharacter gstate = case shape (character gstate) of
@@ -20,4 +16,12 @@ viewCharacter gstate = case shape (character gstate) of
     where cposx = (xp (character gstate))
           cposy = (yp (character gstate))
   Model.Circle x      -> blank
+
+viewEnemies :: GameState -> Picture
+viewEnemies gstate = pictures (map toPicture ce)
+  where ce = currentenemies gstate
+
+toPicture :: Character -> Picture
+toPicture c = case shape c of
+  Model.Rectangle x y -> translate (xp c) (yp c) (color blue (rectangleWire x y))
     
