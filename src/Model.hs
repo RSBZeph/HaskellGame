@@ -33,3 +33,8 @@ initialState = GameState 0 (Character 0 0 (Rectangle 40 40)) level1 [] []
 
 level1 :: [[Character]]
 level1 = [[(Character 100 100 (Rectangle 40 40)),(Character (-100) 100 (Rectangle 60 40))],[(Character 150 (-100) (Rectangle 400 40))]]
+
+removefromList :: Eq a => a -> [a] -> [a]
+removefromList _ []                 = []
+removefromList x (y:ys) | x == y    = removefromList x ys
+                    | otherwise = y : removefromList x ys

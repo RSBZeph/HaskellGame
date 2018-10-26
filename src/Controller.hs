@@ -12,11 +12,18 @@ import System.Random
 -- | Handle one iteration of the game (update)
 step :: Float -> GameState -> IO GameState
 step secs gstate | elapsedTime gstate > nO_SECS_BETWEEN_CYCLES =
-                   return $ gstate { elapsedTime = elapsedTime gstate - nO_SECS_BETWEEN_CYCLES, waves = as, currentenemies = ce, character = (character upchar) }
+                   return $ gstate { elapsedTime = elapsedTime gstate - nO_SECS_BETWEEN_CYCLES, waves = newwvs, currentenemies = ce, character = (character upchar) }
                  | otherwise                                   =
                    return $ gstate { elapsedTime = elapsedTime gstate + secs, character = (character upchar) } -- Just update the elapsed time
-    where wvs@(a:as) = waves gstate
-          ce = currentenemies gstate ++ a
+    where wvs = waves gstate
+          ce = case wvs of
+            []     -> (currentenemies gstate)
+            [a]    -> (currentenemies gstate) ++ a
+            (a:as) -> (currentenemies gstate) ++ a
+          newwvs = case wvs of
+            []     -> []
+            [a]    -> [a]
+            (a:as) -> as
           upchar = gstate { character = character (updateCharacter gstate) }
 
 
@@ -58,12 +65,4 @@ getd :: Event -> GameState -> GameState
 getd (EventKey (Char c) keystate _ _) gstate = newstate
     where newstate | c == 'd' && keystate == Up   = gstate { pressed = removefromList 'd' (pressed gstate) }
                    | c == 'd'                     = gstate { pressed = 'd' : (pressed gstate) }
-                   | otherwise                    = gstate
-
---isDown :: EventKey -> Bool
---isDown _ = undefined          
-
-removefromList :: Eq a => a -> [a] -> [a]
-removefromList _ []                 = []
-removefromList x (y:ys) | x == y    = removefromList x ys
-                    | otherwise = y : removefromList x ys
+                   | otherwise                    = gstate         
