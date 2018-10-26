@@ -13,8 +13,8 @@ view gstate = return (pictures [viewenemies, viewcharacter])
 viewCharacter :: GameState -> Picture
 viewCharacter gstate = case shape (character gstate) of
   Model.Rectangle x y -> translate cposx cposy (color green (rectangleWire x y))
-    where cposx = (xp (character gstate))
-          cposy = (yp (character gstate))
+    where cposx = xp (character gstate)
+          cposy = yp (character gstate)
   Model.Circle x      -> blank
 
 viewEnemies :: GameState -> Picture
