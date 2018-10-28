@@ -12,27 +12,45 @@ import System.Random
 -- | Handle one iteration of the game (update)
 step :: Float -> GameState -> IO GameState
 step secs gstate | elapsedTime gstate > wavetime =
-                   return $ gstate { elapsedTime = elapsedTime gstate - wavetime, waves = newwvs, currentenemies = ce, character = character upchar }
+                   return $ gstate { elapsedTime = elapsedTime gstate - wavetime, waves = newwvs, currentenemies = ce, player = newplayer, projectiles = newproj }
                  | otherwise                                   =
-                   return $ gstate { elapsedTime = elapsedTime gstate + secs, character = character upchar } -- Just update the elapsed time
+                   return $ gstate { elapsedTime = elapsedTime gstate + secs, player = newplayer, projectiles = newproj } -- Just update the elapsed time
     where wvs = waves gstate
           ce = case wvs of
             []     -> currentenemies gstate
             [a]    -> currentenemies gstate ++ a
             (a:as) -> currentenemies gstate ++ a
-          newwvs = case wvs of
+          newwvs = case wvs of --kunnen deze twee cases niet samen op de een of andere manier?
             []     -> []
             [a]    -> [a]
             (a:as) -> as
-          upchar = gstate { character = character (updateCharacter gstate) }
+          p = gstate { projectiles = updateProjectiles (projectiles gstate) []}
+          updatestate = updateInputDown p
+          newplayer = player updatestate
+          newproj = projectiles updatestate
 
-
-updateCharacter :: GameState -> GameState
-updateCharacter gstate | 'w' `elem` pressed gstate = updateCharacter gstate { character = (character gstate) { yp = yp (character gstate) + 10 }, pressed = removefromList 'w' (pressed gstate) }
-                       | 'a' `elem` pressed gstate = updateCharacter gstate { character = (character gstate) { xp = xp (character gstate) - 10 }, pressed = removefromList 'a' (pressed gstate) }
-                       | 's' `elem` pressed gstate = updateCharacter gstate { character = (character gstate) { yp = yp (character gstate) - 10 }, pressed = removefromList 's' (pressed gstate) }
-                       | 'd' `elem` pressed gstate = updateCharacter gstate { character = (character gstate) { xp = xp (character gstate) + 10 }, pressed = removefromList 'd' (pressed gstate) }
+--if a button is pressed, it gets added to the 'pressed' list in gamestate
+--if the button is no longer pressed, it gets removed from the list
+--this method checks which buttons are held down so that their effects (moving, shooting, etc.) may be repeated over several frames
+--instead of only applying on the frame in which the button was pressed
+updateInputDown :: GameState -> GameState
+updateInputDown gstate | 'w' `elem` pressed gstate = updateInputDown gstate { player = (player gstate) { cy = pcy + 2 }, pressed = removefromList 'w' (pressed gstate) }
+                       | 'a' `elem` pressed gstate = updateInputDown gstate { player = (player gstate) { cx = pcx - 2 }, pressed = removefromList 'a' (pressed gstate) }
+                       | 's' `elem` pressed gstate = updateInputDown gstate { player = (player gstate) { cy = pcy - 2 }, pressed = removefromList 's' (pressed gstate) }
+                       | 'd' `elem` pressed gstate = updateInputDown gstate { player = (player gstate) { cx = pcx + 2 }, pressed = removefromList 'd' (pressed gstate) }
+                       | 'j' `elem` pressed gstate = updateInputDown gstate --hoe zorg je ervoor dat de speler maar om de x seconden kan schieten?
+                       { projectiles = Projectile pcx pcy 5 3 (Model.Rectangle 5 5) : projectiles gstate, pressed = removefromList 'j' (pressed gstate) }
                        | otherwise                 = gstate
+    where pcx = cx (player gstate)
+          pcy = cy (player gstate)
+
+
+updateProjectiles :: [Projectile] -> [Projectile] -> [Projectile]
+updateProjectiles [] _ = []
+updateProjectiles [a] done = done ++ [b]
+    where b =  a { px = px a + speed a }
+updateProjectiles (a:as) done = updateProjectiles as (done ++ [b])
+    where b =  a { px = px a + speed a }
 
 
 -- | Handle user input
@@ -62,7 +80,13 @@ gets event@(EventKey (Char c) keystate _ _) gstate = getd event newstate
                    | otherwise                    = gstate
                    
 getd :: Event -> GameState -> GameState
-getd (EventKey (Char c) keystate _ _) gstate = newstate
+getd event@(EventKey (Char c) keystate _ _) gstate = getj event newstate
     where newstate | c == 'd' && keystate == Up   = gstate { pressed = removefromList 'd' (pressed gstate) }
                    | c == 'd'                     = gstate { pressed = 'd' : pressed gstate }
-                   | otherwise                    = gstate         
+                   | otherwise                    = gstate  
+                   
+getj :: Event -> GameState -> GameState
+getj (EventKey (Char c) keystate _ _) gstate = newstate
+    where newstate | c == 'j' && keystate == Up   = gstate { pressed = removefromList 'j' (pressed gstate) }
+                   | c == 'j'                     = gstate { pressed = 'j' : pressed gstate }
+                   | otherwise                    = gstate                     

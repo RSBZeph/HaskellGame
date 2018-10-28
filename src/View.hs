@@ -6,22 +6,29 @@ import Graphics.Gloss
 import Model
 
 view :: GameState -> IO Picture
-view gstate = return (pictures [viewenemies, viewcharacter])
-    where viewcharacter = viewCharacter gstate
-          viewenemies = viewEnemies gstate
+view gstate = return (pictures [viewenemies, viewplayer, viewprojectiles])
+    where viewplayer = viewPlayer gstate
+          viewenemies = viewEnemies (currentenemies gstate)
+          viewprojectiles = viewProjectiles (projectiles gstate)
 
-viewCharacter :: GameState -> Picture
-viewCharacter gstate = case shape (character gstate) of
+viewPlayer :: GameState -> Picture
+viewPlayer gstate = case shape (player gstate) of
   Model.Rectangle x y -> translate cposx cposy (color green (rectangleWire x y))
-    where cposx = xp (character gstate)
-          cposy = yp (character gstate)
+    where cposx = cx (player gstate)
+          cposy = cy (player gstate)
   Model.Circle x      -> blank
 
-viewEnemies :: GameState -> Picture
-viewEnemies gstate = pictures (map toPicture ce)
-  where ce = currentenemies gstate
+viewEnemies :: [Character] -> Picture
+viewEnemies enemies = pictures (map ctoPicture enemies)
 
-toPicture :: Character -> Picture
-toPicture c = case shape c of
-  Model.Rectangle x y -> translate (xp c) (yp c) (color blue (rectangleWire x y))
+viewProjectiles :: [Projectile] -> Picture
+viewProjectiles list = pictures (map ptoPicture list)
+
+ctoPicture :: Character -> Picture
+ctoPicture c = case shape c of
+  Model.Rectangle x y -> translate (cx c) (cy c) (color blue (rectangleWire x y))
+
+ptoPicture :: Projectile -> Picture
+ptoPicture p = case s p of
+  Model.Rectangle x y -> translate (px p) (py p) (color red (rectangleWire x y))
     
