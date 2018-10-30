@@ -6,10 +6,12 @@ import Graphics.Gloss
 import Model
 
 view :: GameState -> IO Picture
-view gstate = return (pictures [viewenemies, viewplayer, viewprojectiles])
+view gstate = return (pictures [viewenemies, viewplayer, viewprojectiles, viewpause])
     where viewplayer = viewPlayer gstate
           viewenemies = viewEnemies (currentenemies gstate)
-          viewprojectiles = viewProjectiles (projectiles gstate)          
+          viewprojectiles = viewProjectiles (projectiles gstate)
+          viewpause | paused gstate = translate (-200) 0 (color red (Text "Paused"))
+                    | otherwise     = Blank
 
 viewPlayer :: GameState -> Picture
 viewPlayer gstate = case shape (player gstate) of

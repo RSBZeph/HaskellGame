@@ -10,7 +10,8 @@ import System.Random
 
 -- | Handle one iteration of the game (update)
 step :: Float -> GameState -> IO GameState
-step secs gstate | elapsedTime gstate > wavetime =
+step secs gstate | paused gstate = return $ gstate
+                 | elapsedTime gstate > wavetime =
                    return $ updategstate { elapsedTime = elapsedTime gstate - wavetime, waves = newwvs gstate, currentenemies = newce updategstate } -- add a wave after a certain period of time
                  | otherwise                     =
                    return $ updategstate { elapsedTime = elapsedTime gstate + secs }
@@ -77,15 +78,16 @@ filterlist (x:xs) (a:as) | a || traveled x > 200 = filterlist xs as
 --this method checks which buttons are held down so that their effects (moving, shooting, etc.) may be repeated over several frames
 --instead of only applying on the frame in which the button initially was pressed
 updateInputDown :: GameState -> GameState
-updateInputDown gstate | 'w' `elem` pressed gstate = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ y = py + 2 } }, pressed = removefromList 'w' (pressed gstate) }
-                       | 'a' `elem` pressed gstate = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px - 2 } }, pressed = removefromList 'a' (pressed gstate) }
-                       | 's' `elem` pressed gstate = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ y = py - 2 } }, pressed = removefromList 's' (pressed gstate) }
-                       | 'd' `elem` pressed gstate = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px + 2 } }, pressed = removefromList 'd' (pressed gstate) }
-                       | 'j' `elem` pressed gstate = updateInputDown gstate --hoe zorg je ervoor dat de speler maar om de x seconden kan schieten?
-                       { projectiles = Projectile ((cpos (player gstate)){x = 20 + x (cpos (player gstate))}) 2 3 (Model.Rectangle 5 5) 0 : projectiles gstate, pressed = removefromList 'j' (pressed gstate) }
+updateInputDown gstate | 'w' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ y = py + 2 } }, pressed = removefromList 'w' (pg) }
+                       | 'a' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px - 2 } }, pressed = removefromList 'a' (pg) }
+                       | 's' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ y = py - 2 } }, pressed = removefromList 's' (pg) }
+                       | 'd' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px + 2 } }, pressed = removefromList 'd' (pg) }
+                       | 'j' `elem` pg = updateInputDown gstate 
+                       { projectiles = Projectile ((cpos (player gstate)){x = 20 + x (cpos (player gstate))}) 2 3 (Model.Rectangle 5 5) 0 : projectiles gstate, pressed = removefromList 'j' (pg) }
                        | otherwise                 = gstate
     where px = x (cpos (player gstate))
           py = y (cpos (player gstate))
+          pg = pressed gstate
 
 moveprojectiles :: [Projectile] -> [Projectile] -> [Projectile]
 moveprojectiles [] _ = []
@@ -112,7 +114,8 @@ input :: Event -> GameState -> IO GameState
 input e gstate = return (inputKey e gstate)
 
 inputKey :: Event -> GameState -> GameState
-inputKey event@(EventKey (Char c) keystate _ _) gstate = getw event gstate
+inputKey event@(EventKey (Char c) keystate _ _) gstate | paused gstate = getp event gstate
+                                                       | otherwise     = getw event gstate
 inputKey _ gstate = gstate -- Otherwise keep the same
 
 getw :: Event -> GameState -> GameState
@@ -140,7 +143,12 @@ getd event@(EventKey (Char c) keystate _ _) gstate = getj event newstate
                    | otherwise                    = gstate  
                    
 getj :: Event -> GameState -> GameState
-getj (EventKey (Char c) keystate _ _) gstate = newstate
+getj event@(EventKey (Char c) keystate _ _) gstate = getp event newstate
     where newstate | c == 'j' && keystate == Up   = gstate { pressed = removefromList 'j' (pressed gstate) }
                    | c == 'j'                     = gstate { pressed = 'j' : pressed gstate }
                    | otherwise                    = gstate                     
+
+getp :: Event -> GameState -> GameState
+getp (EventKey (Char c) keystate _ _) gstate = newstate
+    where newstate | c == 'p' && keystate == Down = updateInputDown gstate { paused = not (paused gstate)}
+                   | otherwise                    = gstate                           
