@@ -9,13 +9,13 @@ view :: GameState -> IO Picture
 view gstate = return (pictures [viewenemies, viewplayer, viewprojectiles])
     where viewplayer = viewPlayer gstate
           viewenemies = viewEnemies (currentenemies gstate)
-          viewprojectiles = viewProjectiles (projectiles gstate)
+          viewprojectiles = viewProjectiles (projectiles gstate)          
 
 viewPlayer :: GameState -> Picture
 viewPlayer gstate = case shape (player gstate) of
-  Model.Rectangle x y -> translate cposx cposy (color green (rectangleWire x y))
-    where cposx = cx (player gstate)
-          cposy = cy (player gstate)
+  Model.Rectangle a b -> translate cposx cposy (color green (rectangleWire a b))
+    where cposx = x (cpos (player gstate))
+          cposy = y (cpos (player gstate))
   Model.Circle x      -> blank
 
 viewEnemies :: [Character] -> Picture
@@ -26,9 +26,9 @@ viewProjectiles list = pictures (map ptoPicture list)
 
 ctoPicture :: Character -> Picture
 ctoPicture c = case shape c of
-  Model.Rectangle x y -> translate (cx c) (cy c) (color blue (rectangleWire x y))
+  Model.Rectangle a b -> translate (x (cpos c)) (y (cpos c)) (color blue (rectangleWire a b))
 
 ptoPicture :: Projectile -> Picture
 ptoPicture p = case s p of
-  Model.Rectangle x y -> translate (px p) (py p) (color red (rectangleWire x y))
+  Model.Rectangle a b -> translate (x (ppos p)) (y (ppos p)) (color red (rectangleWire a b))
     
