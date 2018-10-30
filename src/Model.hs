@@ -12,7 +12,7 @@ data Position = Position {x :: Float, y :: Float}
 data Shape = Rectangle { width :: Float, height :: Float }
            | Circle {radius :: Float }
            
-data Character = Character { cpos :: Position, shape :: Shape, health :: Float }
+data Character = Character { cpos :: Position, shape :: Shape, health :: Float, cSpeed :: Float, cType :: String }
 data Projectile = Projectile { ppos :: Position, damage :: Float, speed :: Float, s :: Shape, traveled :: Float }
 data InfoToShow = ShowNothing
                 | ShowANumber Int
@@ -31,10 +31,10 @@ data GameState = GameState {
                  }
 
 initialState :: GameState
-initialState = GameState 0 (Character (Position 0 0) (Rectangle 40 40) 300) level1 [Character (Position 100 100) (Rectangle 40 40) 1] [] []
+initialState = GameState 0 (Character (Position 0 0) (Rectangle 40 40) 300 1.5 "Player") level1 [Character (Position 100 100) (Rectangle 40 40) 1 1.5 "Chase"] [] []
 
 level1 :: [[Character]]
-level1 = [[Character (Position 100 100) (Rectangle 40 40) 1,Character (Position(-100) 100) (Rectangle 60 40) 0],[Character (Position 150 (-100)) (Rectangle 400 40) 0]]
+level1 = [[Character (Position 100 100) (Rectangle 40 40) 1 1.5 "Chase",Character (Position(-100) 100) (Rectangle 60 40) 0 1.5 "nietChase"],[Character (Position 150 (-100)) (Rectangle 400 40) 0 1.5 "Chase"]]
 
 removefromList :: Eq a => a -> [a] -> [a]
 removefromList _ []                 = []
