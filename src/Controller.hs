@@ -3,7 +3,6 @@
 module Controller where
 
 import Model
-
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
 import System.Random
@@ -12,22 +11,26 @@ import System.Random
 -- | Handle one iteration of the game (update)
 step :: Float -> GameState -> IO GameState
 step secs gstate | elapsedTime gstate > wavetime =
-                   return $ updatgstate { elapsedTime = elapsedTime gstate - wavetime, waves = newwvs } -- add a wave after a certain period of time
-                 | otherwise                                   =
+                   return $ updatgstate { elapsedTime = elapsedTime gstate - wavetime, waves = newwvs gstate, currentenemies = newce updatgstate } -- add a wave after a certain period of time
+                 | otherwise                     =
                    return $ updatgstate { elapsedTime = elapsedTime gstate + secs }
-    where ce = case waves gstate of
-            []     -> currentenemies gstate
-            [a]    -> currentenemies gstate ++ a
-            (a:as) -> currentenemies gstate ++ a
-          newwvs = case waves gstate of --kunnen deze twee cases niet samen op de een of andere manier?
-            []     -> []
-            [[a]]  -> []
-            (a:as) -> as
-          updatinput = (updateInputDown gstate { projectiles = moveprojectiles (projectiles gstate) [] }){ currentenemies = ce }
+    where updatinput = updateInputDown (gstate { projectiles = moveprojectiles (projectiles gstate) [] })
           updatchar = characterhit (projectiles updatinput) (currentenemies updatinput)
           updatproj = projectilehit (projectiles updatinput) (currentenemies updatinput)
-          updatgstate = gstate{ currentenemies = updatchar, player = player updatinput, projectiles = updatproj }
+          updatgstate = gstate{ currentenemies = updatchar, player = player updatinput, projectiles = updatproj }          
 
+
+newce :: GameState -> [Character]
+newce gstate =  case waves gstate of
+                    []     -> currentenemies gstate
+                    [a]    -> currentenemies gstate ++ a
+                    (a:_)  -> currentenemies gstate ++ a
+
+newwvs :: GameState -> [[Character]]
+newwvs gstate = case waves gstate of
+                    []     -> []
+                    [_]    -> []
+                    (a:as) -> as
 
 --check if a character gets hit by a bullet, reduce its lifepoints by the bullet's damage and remove the character is health <= 0
 characterhit :: [Projectile] -> [Character] -> [Character]
@@ -42,8 +45,10 @@ characterhit' p [a] | boxCollision (s p, ppos p) (shape a, cpos a) = damagestep
                     | otherwise                                    = [a]
     where damagestep | health a - damage p <= 0 = []
                      | otherwise = [a{ health = health a - damage p }]
-characterhit' p (a:as) | boxCollision (s p, ppos p) (shape a, cpos a) = (a{ health = health a - damage p }) : as
+characterhit' p (a:as) | boxCollision (s p, ppos p) (shape a, cpos a) = damagestep
                        | otherwise                                    = a : characterhit' p as
+    where damagestep | health a - damage p <= 0 = as
+                     | otherwise = a{ health = health a - damage p } : as
 
 
 --check if a bullet hits a character, and remove it from the 'projectiles' list if it does
@@ -76,7 +81,7 @@ updateInputDown gstate | 'w' `elem` pressed gstate = updateInputDown gstate { pl
                        | 's' `elem` pressed gstate = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ y = py - 2 } }, pressed = removefromList 's' (pressed gstate) }
                        | 'd' `elem` pressed gstate = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px + 2 } }, pressed = removefromList 'd' (pressed gstate) }
                        | 'j' `elem` pressed gstate = updateInputDown gstate --hoe zorg je ervoor dat de speler maar om de x seconden kan schieten?
-                       { projectiles = Projectile ((cpos (player gstate)){x = 20 + x (cpos (player gstate))}) 5 3 (Model.Rectangle 5 5) 0 : projectiles gstate, pressed = removefromList 'j' (pressed gstate) }
+                       { projectiles = Projectile ((cpos (player gstate)){x = 20 + x (cpos (player gstate))}) 2 3 (Model.Rectangle 5 5) 0 : projectiles gstate, pressed = removefromList 'j' (pressed gstate) }
                        | otherwise                 = gstate
     where px = x (cpos (player gstate))
           py = y (cpos (player gstate))

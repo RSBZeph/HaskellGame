@@ -2,12 +2,7 @@
 --   which represent the state of the game
 module Model where
 
---{-# LANGUAGE DuplicateRecordFields #-} --dit zou wat moeten doen???
-
 newtype Name = Name String
---newtype Speed = Speed Float
---newtype Damage = Damage Float --doordat deze aparte datatypes zijn kan je bv niet de speed bij de float van iemands coordinaten optellen
---newtype Health = Health Float
 data Position = Position {x :: Float, y :: Float}
 data Shape = Rectangle { width :: Float, height :: Float }
            | Circle {radius :: Float }
@@ -19,7 +14,7 @@ data InfoToShow = ShowNothing
                 | ShowAChar   Char
 
 wavetime :: Float
-wavetime = 5
+wavetime = 2
 
 data GameState = GameState {
                    elapsedTime    :: Float
@@ -31,10 +26,10 @@ data GameState = GameState {
                  }
 
 initialState :: GameState
-initialState = GameState 0 (Character (Position 0 0) (Rectangle 40 40) 300) level1 [Character (Position 100 100) (Rectangle 40 40) 1] [] []
+initialState = GameState 0 (Character (Position 0 0) (Rectangle 40 40) 300) level1 [] [] []
 
 level1 :: [[Character]]
-level1 = [[Character (Position 100 100) (Rectangle 40 40) 1,Character (Position(-100) 100) (Rectangle 60 40) 0],[Character (Position 150 (-100)) (Rectangle 400 40) 0]]
+level1 = [[Character (Position 100 100) (Rectangle 40 40) 1,Character (Position(-100) 100) (Rectangle 60 40) 40],[Character (Position 150 (-100)) (Rectangle 400 40) 100]]
 
 removefromList :: Eq a => a -> [a] -> [a]
 removefromList _ []                 = []
