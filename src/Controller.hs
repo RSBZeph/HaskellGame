@@ -11,13 +11,14 @@ import System.Random
 -- | Handle one iteration of the game (update)
 step :: Float -> GameState -> IO GameState
 step secs gstate | elapsedTime gstate > wavetime =
-                   return $ updatgstate { elapsedTime = elapsedTime gstate - wavetime, waves = newwvs gstate, currentenemies = newce updatgstate } -- add a wave after a certain period of time
+                   return $ updategstate { elapsedTime = elapsedTime gstate - wavetime, waves = newwvs gstate, currentenemies = newce updategstate } -- add a wave after a certain period of time
                  | otherwise                     =
-                   return $ updatgstate { elapsedTime = elapsedTime gstate + secs }
-    where updatinput = updateInputDown (gstate { projectiles = moveprojectiles (projectiles gstate) [] })
-          updatchar = characterhit (projectiles updatinput) (currentenemies updatinput)
-          updatproj = projectilehit (projectiles updatinput) (currentenemies updatinput)
-          updatgstate = gstate{ currentenemies = updatchar, player = player updatinput, projectiles = updatproj }          
+                   return $ updategstate { elapsedTime = elapsedTime gstate + secs }
+    where updateinput = updateInputDown gstate { projectiles = moveprojectiles (projectiles gstate) [] }
+          updatechar = characterhit (projectiles updateinput) (currentenemies updateinput)
+          updateproj = projectilehit (projectiles updateinput) (currentenemies updateinput)
+          updatechase = chaseEnemy (updatechar) [] (player gstate)
+          updategstate = gstate{ currentenemies = updatechase, player = player updateinput, projectiles = updateproj }      
 
 
 newce :: GameState -> [Character]
@@ -93,6 +94,18 @@ moveprojectiles [a] done = done ++ [b]
 moveprojectiles (a:as) done = moveprojectiles as (done ++ [b])
     where b =  a { ppos = (ppos a){ x = x(ppos a) + speed a }, traveled = traveled a + speed a }
 
+chaseEnemy :: [Character] -> [Character] -> Character -> [Character]
+chaseEnemy [] _ _= []
+chaseEnemy [a] done p | cType a == "Chase" = done ++ [b]
+                      | otherwise = done ++ [a]
+    where b | x (cpos a) >= x (cpos p) && y (cpos a) <= y (cpos p) = a { cpos = (cpos a){ x = x(cpos a) - cSpeed a } { y = y(cpos a) + cSpeed a }}
+            | x (cpos a) >= x (cpos p) && y (cpos a) >= y (cpos p) = a { cpos = (cpos a){ x = x(cpos a) - cSpeed a } { y = y(cpos a) - cSpeed a }}
+            | otherwise = a { cpos = (cpos a){ x = x(cpos a) - cSpeed a }}
+chaseEnemy (a:as) done p | cType a == "Chase" = chaseEnemy as (done ++ [b]) p
+                         | otherwise = chaseEnemy as (done ++ [a]) p
+    where b | x (cpos a) >= x (cpos p) && y (cpos a) <= y (cpos p) = a { cpos = (cpos a){ x = x(cpos a) - cSpeed a } { y = y(cpos a) + cSpeed a }}
+            | x (cpos a) >= x (cpos p) && y (cpos a) >= y (cpos p) = a { cpos = (cpos a){ x = x(cpos a) - cSpeed a } { y = y(cpos a) - cSpeed a }}
+            | otherwise = a { cpos = (cpos a){ x = x(cpos a) - cSpeed a }}
 
 -- | Handle user input
 input :: Event -> GameState -> IO GameState
