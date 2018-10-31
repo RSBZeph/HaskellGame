@@ -6,21 +6,31 @@ import Model
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
 import System.Random
+import Data.List
 
 
 -- | Handle one iteration of the game (update)
 step :: Float -> GameState -> IO GameState
-step secs gstate | paused gstate = return $ gstate
+step secs gstate | paused gstate = return gstate --if the game is paused,
                  | elapsedTime gstate > wavetime =
-                   return $ updategstate { elapsedTime = elapsedTime gstate - wavetime, waves = newwvs gstate, currentenemies = newce updategstate } -- add a wave after a certain period of time
+                   return $ updategstate { elapsedTime = elapsedTime gstate - wavetime + secs, waves = newwvs gstate, currentenemies = newce updategstate } -- add a wave after a certain period of time
                  | otherwise                     =
                    return $ updategstate { elapsedTime = elapsedTime gstate + secs }
-    where updateinput = updateInputDown gstate { projectiles = moveprojectiles (projectiles gstate) [] }
+    where 
+          updateinput = updateInputDown gstate { projectiles = moveprojectiles (projectiles gstate) [] }
           updatechar = characterhit (projectiles updateinput) (currentenemies updateinput)
           updateproj = projectilehit (projectiles updateinput) (currentenemies updateinput)
-          updatechase = chaseEnemy (updatechar) [] (player gstate)
-          updategstate = gstate{ currentenemies = updatechase, player = player updateinput, projectiles = updateproj }      
+          updatedead = addDead (updateinput { currentenemies = updatechar, explosions = updatetime (explosions updateinput) secs })
+          updatechase = chaseEnemy (currentenemies updatedead) [] (player updateinput) 
+          updategstate = gstate{ currentenemies = updatechase, player = player updateinput, projectiles = updateproj, explosions = explosions updatedead } 
+             
 
+updatetime :: [Explosion] -> Float -> [Explosion]
+updatetime [] _ = []
+updatetime [a] secs | timer a > 2 = []
+                    | otherwise   = [a{ timer = timer a + secs }]
+updatetime (a:as) secs | timer a > 2 = updatetime as secs
+                       | otherwise   = a{ timer = timer a + secs } : updatetime as secs
 
 newce :: GameState -> [Character]
 newce gstate =  case waves gstate of
@@ -34,7 +44,7 @@ newwvs gstate = case waves gstate of
                     [_]    -> []
                     (a:as) -> as
 
---check if a character gets hit by a bullet, reduce its lifepoints by the bullet's damage and remove the character is health <= 0
+--check if a character gets hit by a bullet, reduce its lifepoints by the bullet's damage
 characterhit :: [Projectile] -> [Character] -> [Character]
 characterhit [] c = c
 characterhit [x] c = characterhit' x c
@@ -43,14 +53,17 @@ characterhit (x:xs) c = characterhit xs newc
 
 characterhit' :: Projectile -> [Character] -> [Character]
 characterhit' p [] = []
-characterhit' p [a] | boxCollision (s p, ppos p) (shape a, cpos a) = damagestep
+characterhit' p [a] | boxCollision (s p, ppos p) (shape a, cpos a) = [a{ health = health a - damage p }]
                     | otherwise                                    = [a]
-    where damagestep | health a - damage p <= 0 = []
-                     | otherwise = [a{ health = health a - damage p }]
-characterhit' p (a:as) | boxCollision (s p, ppos p) (shape a, cpos a) = damagestep
+characterhit' p (a:as) | boxCollision (s p, ppos p) (shape a, cpos a) = a{ health = health a - damage p } : as
                        | otherwise                                    = a : characterhit' p as
-    where damagestep | health a - damage p <= 0 = as
-                     | otherwise = a{ health = health a - damage p } : as
+
+
+--if an enemy has <= 0 health, remove it and add it to the explosions list
+addDead :: GameState -> GameState
+addDead gstate = gstate { currentenemies = newcurrent, explosions = explosions gstate ++ newdead }
+    where newcurrent = filter (\x -> health x > 0) (currentenemies gstate)
+          newdead = map (\x -> Explosion (cpos x) ((width (shape x) + height (shape x)) / 4) 0) (filter (\x -> health x <= 0) (currentenemies gstate))
 
 
 --check if a bullet hits a character, and remove it from the 'projectiles' list if it does
@@ -78,12 +91,12 @@ filterlist (x:xs) (a:as) | a || traveled x > 200 = filterlist xs as
 --this method checks which buttons are held down so that their effects (moving, shooting, etc.) may be repeated over several frames
 --instead of only applying on the frame in which the button initially was pressed
 updateInputDown :: GameState -> GameState
-updateInputDown gstate | 'w' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ y = py + 2 } }, pressed = removefromList 'w' (pg) }
-                       | 'a' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px - 2 } }, pressed = removefromList 'a' (pg) }
-                       | 's' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ y = py - 2 } }, pressed = removefromList 's' (pg) }
-                       | 'd' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px + 2 } }, pressed = removefromList 'd' (pg) }
+updateInputDown gstate | 'w' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ y = py + 2 } }, pressed = removefromList 'w' pg }
+                       | 'a' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px - 2 } }, pressed = removefromList 'a' pg }
+                       | 's' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ y = py - 2 } }, pressed = removefromList 's' pg }
+                       | 'd' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px + 2 } }, pressed = removefromList 'd' pg }
                        | 'j' `elem` pg = updateInputDown gstate 
-                       { projectiles = Projectile ((cpos (player gstate)){x = 20 + x (cpos (player gstate))}) 2 3 (Model.Rectangle 5 5) 0 : projectiles gstate, pressed = removefromList 'j' (pg) }
+                       { projectiles = Projectile ((cpos (player gstate)){x = 20 + x (cpos (player gstate))}) 2 3 (Model.Rectangle 5 5) 0 : projectiles gstate, pressed = removefromList 'j' pg }
                        | otherwise                 = gstate
     where px = x (cpos (player gstate))
           py = y (cpos (player gstate))
@@ -114,8 +127,8 @@ input :: Event -> GameState -> IO GameState
 input e gstate = return (inputKey e gstate)
 
 inputKey :: Event -> GameState -> GameState
-inputKey event@(EventKey (Char c) keystate _ _) gstate | paused gstate = getp event gstate
-                                                       | otherwise     = getw event gstate
+inputKey event@(EventKey (Char c) keystate _ _) gstate | not (paused gstate) = getw event gstate
+                                                       | otherwise           = getp event gstate --if the game is paused, only check if the player is unpausing or not
 inputKey _ gstate = gstate -- Otherwise keep the same
 
 getw :: Event -> GameState -> GameState

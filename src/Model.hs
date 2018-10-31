@@ -5,13 +5,10 @@ module Model where
 newtype Name = Name String
 data Position = Position {x :: Float, y :: Float}
 data Shape = Rectangle { width :: Float, height :: Float }
-           | Circle {radius :: Float }
            
 data Character = Character { cpos :: Position, shape :: Shape, health :: Float, cSpeed :: Float, cType :: String }
 data Projectile = Projectile { ppos :: Position, damage :: Float, speed :: Float, s :: Shape, traveled :: Float }
-data InfoToShow = ShowNothing
-                | ShowANumber Int
-                | ShowAChar   Char
+data Explosion = Explosion { epos :: Position, radius :: Float, timer :: Float}
 
 wavetime :: Float
 wavetime = 2
@@ -21,13 +18,14 @@ data GameState = GameState {
                  , player         :: Character
                  , waves          :: [[Character]]
                  , currentenemies :: [Character]
+                 , explosions     :: [Explosion]
                  , pressed        :: [Char]
                  , projectiles    :: [Projectile]
                  , paused         :: Bool
                  }
 
 initialState :: GameState
-initialState = GameState 0 (Character (Position 0 0) (Rectangle 40 40) 300 2 "nietChase") level1 [] [] [] False
+initialState = GameState 0 (Character (Position 0 0) (Rectangle 40 40) 300 2 "nietChase") level1 [] [] [] [] False
 
 level1 :: [[Character]]
 level1 = [[Character (Position 100 100) (Rectangle 40 40) 1 1.5 "Chase",Character (Position(-100) 100) (Rectangle 60 40) 40 1.5 "nietChase"],[Character (Position 150 (-100)) (Rectangle 400 40) 100 1.5 "Chase"]]
