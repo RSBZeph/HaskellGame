@@ -6,7 +6,7 @@ newtype Name = Name String
 data Position = Position {x :: Float, y :: Float}
 data Shape = Rectangle { width :: Float, height :: Float }
            
-data Character = Character { cpos :: Position, shape :: Shape, health :: Float, cSpeed :: Float, cType :: String, shootTimer :: Float }
+data Character = Character { cpos :: Position, shape :: Shape, health :: Float, cSpeed :: Float, cType :: String, shootTimer :: Float, score :: Int }
 data Projectile = Projectile { ppos :: Position, damage :: Float, speed :: Float, s :: Shape, traveled :: Float }
 data Explosion = Explosion { epos :: Position, radius :: Float, timer :: Float}
 
@@ -25,10 +25,10 @@ data GameState = GameState {
                  }
 
 initialState :: GameState
-initialState = GameState 0 (Character (Position (-600) 0) (Rectangle 40 40) 300 2 "Player" 0) level1 [] [] [] [] False
+initialState = GameState 0 (Character (Position (-600) 0) (Rectangle 40 40) 300 2 "Player" 0 0) level1 [] [] [] [] False
 
 level1 :: [[Character]]
-level1 = [[Character (Position 721 (-100)) (Rectangle 40 40) 1 1.8 "Chase" 0,Character (Position 721 200) (Rectangle 40 40) 40 1.8 "nietChase" 0],[Character (Position 721 (0)) (Rectangle 40 40) 10 1.8 "Chase" 0]]
+level1 = [[Character (Position 721 (-100)) (Rectangle 40 40) 1 1.8 "Chase" 0 5,Character (Position 721 200) (Rectangle 40 40) 40 1.8 "nietChase" 0 7],[Character (Position 721 (0)) (Rectangle 40 40) 10 1.8 "Chase" 0 6]]
 
 removefromList :: Eq a => a -> [a] -> [a]
 removefromList _ []                 = []

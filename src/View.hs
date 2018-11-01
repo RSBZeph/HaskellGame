@@ -6,22 +6,20 @@ import Graphics.Gloss
 import Model
 
 view :: GameState -> IO Picture
-view gstate = return (pictures [viewenemies, viewplayer, viewprojectiles, viewpause, viewdead])
+view gstate = return (pictures [viewenemies, viewplayer, viewprojectiles, viewpause, viewdead, viewscore])
     where viewplayer = viewPlayer gstate
-          viewenemies = viewEnemies (currentenemies gstate)
+          viewenemies = pictures (map ctoPicture (currentenemies gstate))
           viewprojectiles = pictures (map ptoPicture (projectiles gstate))
           viewpause | paused gstate = translate (-200) 0 (color red (Text "Paused"))
                     | otherwise     = Blank
           viewdead = viewDead (explosions gstate)
+          viewscore = translate (-690) 235 (scale 0.5 0.5 (color red (Text (show (score (player gstate))))))
 
 viewPlayer :: GameState -> Picture
 viewPlayer gstate = case shape (player gstate) of
   Model.Rectangle a b -> translate cposx cposy (color green (rectangleWire a b))
     where cposx = x (cpos (player gstate))
           cposy = y (cpos (player gstate))
-
-viewEnemies :: [Character] -> Picture
-viewEnemies enemies = pictures (map ctoPicture enemies)
 
 viewDead :: [Explosion] -> Picture
 viewDead [] = Blank

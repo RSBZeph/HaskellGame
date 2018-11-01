@@ -23,7 +23,7 @@ step secs gstate | paused gstate = return gstate --if the game is paused,
           updateproj = projectilehit (projectiles updateinput) (currentenemies updateinput)
           updatedead = addDead (updateinput { currentenemies = updatechar})
           updatechase = chaseEnemy (currentenemies updatedead) [] (player updateinput) 
-          updategstate = gstate{ elapsedTime = elapsedTime gstate + secs, currentenemies = updatechase, player = player updateinput, projectiles = updateproj, explosions = explosions updatedead } 
+          updategstate = gstate{ elapsedTime = elapsedTime gstate + secs, currentenemies = updatechase, player = (player updateinput) { score = score (player updatedead) }, projectiles = updateproj, explosions = explosions updatedead } 
              
 
 explosiontime :: [Explosion] -> Float -> [Explosion]
@@ -67,10 +67,11 @@ characterhit' p (a:as) | boxCollision (s p, ppos p) (shape a, cpos a) = a{ healt
 
 --if an enemy has <= 0 health, remove it and add it to the explosions list
 addDead :: GameState -> GameState
-addDead gstate = gstate { currentenemies = newcurrent, explosions = explosions gstate ++ newdead }
+addDead gstate = gstate { currentenemies = newcurrent, explosions = explosions gstate ++ newexplosions, player = (player gstate) { score = newscore } }
     where newcurrent = filter (\x -> health x > 0) (currentenemies gstate)
-          newdead = map (\x -> Explosion (cpos x) ((width (shape x) + height (shape x)) / 4) 0) (filter (\x -> health x <= 0) (currentenemies gstate))
-
+          newdead = filter (\x -> health x <= 0) (currentenemies gstate)
+          newexplosions = map (\x -> Explosion (cpos x) ((width (shape x) + height (shape x)) / 4) 0) newdead
+          newscore = score (player gstate) + sum (map score newdead)
 
 --check if a bullet hits a character, and remove it from the 'projectiles' list if it does
 projectilehit :: [Projectile] -> [Character] -> [Projectile]
@@ -86,10 +87,32 @@ projectilehit' (a:as) p | boxCollision (s p, ppos p) (shape a, cpos a) = True
 
 filterlist :: [Projectile] -> [Bool] -> [Projectile]
 filterlist [] _ = []
-filterlist [x] [a] | a || traveled x > 300 = []
-                   | otherwise             = [x]
-filterlist (x:xs) (a:as) | a || traveled x > 300 = filterlist xs as
-                         | otherwise             = x : filterlist xs as
+filterlist [x] [a] | a         = []
+                   | otherwise = [x]
+filterlist (x:xs) (a:as) | a         = filterlist xs as
+                         | otherwise = x : filterlist xs as
+
+
+moveprojectiles :: [Projectile] -> [Projectile] -> [Projectile]
+moveprojectiles p done = case p of
+                         []     -> []
+                         [a]    -> done ++ b a
+                         (a:as) -> moveprojectiles as (done ++ b a)
+    where b c | traveled c + speed c < 1500 = [c { ppos = (ppos c){ x = x(ppos c) + speed c }, traveled = traveled c + speed c }]
+              | otherwise                   = []
+
+chaseEnemy :: [Character] -> [Character] -> Character -> [Character]
+chaseEnemy chars done p = case chars of
+                          [] -> []
+                          [a] -> checktype a
+                          (a:as) -> recchecktype a as
+    where checktype i | cType i == "Chase" = done ++ [b i]
+                      | otherwise = done ++ [i]
+          recchecktype i j | cType i == "Chase" = chaseEnemy j (done ++ [b i]) p
+                           | otherwise = chaseEnemy j (done ++ [i]) p
+          b c | x (cpos c) >= x (cpos p) && y (cpos c) <= y (cpos p) = c { cpos = (cpos c){ x = x(cpos c) - cSpeed c, y = y(cpos c) + cSpeed c } }
+              | x (cpos c) >= x (cpos p) && y (cpos c) >= y (cpos p) = c { cpos = (cpos c){ x = x(cpos c) - cSpeed c , y = y(cpos c) - cSpeed c } }
+              | otherwise = c { cpos = (cpos c){ x = x(cpos c) - cSpeed c } }
 
 
 --if a button is pressed, it gets added to the 'pressed' list in gamestate
@@ -107,27 +130,6 @@ updateInputDown gstate | 'w' `elem` pg = updateInputDown gstate { player = (play
     where px = x (cpos (player gstate))
           py = y (cpos (player gstate))
           pg = pressed gstate
-
-moveprojectiles :: [Projectile] -> [Projectile] -> [Projectile]
-moveprojectiles p done = case p of
-                         []     -> []
-                         [a]    -> done ++ b a
-                         (a:as) -> moveprojectiles as (done ++ b a)
-    where b c | traveled c + speed c < 300 = [c { ppos = (ppos c){ x = x(ppos c) + speed c }, traveled = traveled c + speed c }]
-              | otherwise                 = []
-
-chaseEnemy :: [Character] -> [Character] -> Character -> [Character]
-chaseEnemy chars done p = case chars of
-                          [] -> []
-                          [a] -> checktype a
-                          (a:as) -> recchecktype a as
-    where checktype i | cType i == "Chase" = done ++ [b i]
-                      | otherwise = done ++ [i]
-          recchecktype i j | cType i == "Chase" = chaseEnemy j (done ++ [b i]) p
-                           | otherwise = chaseEnemy j (done ++ [i]) p
-          b c | x (cpos c) >= x (cpos p) && y (cpos c) <= y (cpos p) = c { cpos = (cpos c){ x = x(cpos c) - cSpeed c, y = y(cpos c) + cSpeed c } }
-              | x (cpos c) >= x (cpos p) && y (cpos c) >= y (cpos p) = c { cpos = (cpos c){ x = x(cpos c) - cSpeed c , y = y(cpos c) - cSpeed c } }
-              | otherwise = c { cpos = (cpos c){ x = x(cpos c) - cSpeed c } }
 
 
 -- | Handle user input
