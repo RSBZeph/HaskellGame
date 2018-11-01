@@ -9,7 +9,7 @@ view :: GameState -> IO Picture
 view gstate = return (pictures [viewenemies, viewplayer, viewprojectiles, viewpause, viewdead])
     where viewplayer = viewPlayer gstate
           viewenemies = viewEnemies (currentenemies gstate)
-          viewprojectiles = viewProjectiles (projectiles gstate)
+          viewprojectiles = pictures (map ptoPicture (projectiles gstate))
           viewpause | paused gstate = translate (-200) 0 (color red (Text "Paused"))
                     | otherwise     = Blank
           viewdead = viewDead (explosions gstate)
@@ -22,9 +22,6 @@ viewPlayer gstate = case shape (player gstate) of
 
 viewEnemies :: [Character] -> Picture
 viewEnemies enemies = pictures (map ctoPicture enemies)
-
-viewProjectiles :: [Projectile] -> Picture
-viewProjectiles list = pictures (map ptoPicture list)
 
 viewDead :: [Explosion] -> Picture
 viewDead [] = Blank
@@ -43,5 +40,5 @@ ctoPicture c = case shape c of
 
 ptoPicture :: Projectile -> Picture
 ptoPicture p = case s p of
-  Model.Rectangle a b -> translate (x (ppos p)) (y (ppos p)) (color red (rectangleWire a b))
+  Model.Rectangle a b -> translate (x (ppos p)) (y (ppos p)) (color red (scale (b/a) 1 (Circle a)))
     
