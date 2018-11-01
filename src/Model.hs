@@ -22,13 +22,14 @@ data GameState = GameState {
                  , pressed        :: [Char]
                  , projectiles    :: [Projectile]
                  , paused         :: Bool
+                 , shootTimer     :: Float
                  }
 
 initialState :: GameState
-initialState = GameState 0 (Character (Position 0 0) (Rectangle 40 40) 300 2 "nietChase") level1 [] [] [] [] False
+initialState = GameState 0 (Character (Position 0 0) (Rectangle 40 40) 300 2 "nietChase") level1 [] [] [] [] False 0
 
 level1 :: [[Character]]
-level1 = [[Character (Position 100 100) (Rectangle 40 40) 1 1.5 "Chase",Character (Position(-100) 100) (Rectangle 60 40) 40 1.5 "nietChase"],[Character (Position 150 (-100)) (Rectangle 400 40) 100 1.5 "Chase"]]
+level1 = [[Character (Position 100 100) (Rectangle 40 40) 1 1.5 "Chase",Character (Position(-100) 100) (Rectangle 60 40) 40 1.5 "nietChase"],[Character (Position 150 (-100)) (Rectangle 400 40) 10 1.5 "Chase"]]
 
 removefromList :: Eq a => a -> [a] -> [a]
 removefromList _ []                 = []

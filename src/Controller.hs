@@ -13,16 +13,16 @@ import Data.List
 step :: Float -> GameState -> IO GameState
 step secs gstate | paused gstate = return gstate --if the game is paused,
                  | elapsedTime gstate > wavetime =
-                   return $ updategstate { elapsedTime = elapsedTime gstate - wavetime + secs, waves = newwvs gstate, currentenemies = newce updategstate } -- add a wave after a certain period of time
+                   return $ updategstate { elapsedTime = elapsedTime updategstate - wavetime, waves = newwvs gstate, currentenemies = newce updategstate } -- add a wave after a certain period of time
                  | otherwise                     =
-                   return $ updategstate { elapsedTime = elapsedTime gstate + secs }
+                   return updategstate
     where 
-          updateinput = updateInputDown gstate { projectiles = moveprojectiles (projectiles gstate) [] }
+          updateinput = updateInputDown gstate { projectiles = moveprojectiles (projectiles gstate) [], shootTimer = shootTimer gstate + secs }
           updatechar = characterhit (projectiles updateinput) (currentenemies updateinput)
           updateproj = projectilehit (projectiles updateinput) (currentenemies updateinput)
           updatedead = addDead (updateinput { currentenemies = updatechar, explosions = updatetime (explosions updateinput) secs })
           updatechase = chaseEnemy (currentenemies updatedead) [] (player updateinput) 
-          updategstate = gstate{ currentenemies = updatechase, player = player updateinput, projectiles = updateproj, explosions = explosions updatedead } 
+          updategstate = gstate{ elapsedTime = elapsedTime gstate + secs, currentenemies = updatechase, player = player updateinput, projectiles = updateproj, explosions = explosions updatedead, shootTimer = shootTimer updateinput } 
              
 
 updatetime :: [Explosion] -> Float -> [Explosion]
@@ -80,9 +80,9 @@ projectilehit' (a:as) p | boxCollision (s p, ppos p) (shape a, cpos a) = True
 
 filterlist :: [Projectile] -> [Bool] -> [Projectile]
 filterlist [] _ = []
-filterlist [x] [a] | a || traveled x > 200 = []
+filterlist [x] [a] | a || traveled x > 300 = []
                    | otherwise             = [x]
-filterlist (x:xs) (a:as) | a || traveled x > 200 = filterlist xs as
+filterlist (x:xs) (a:as) | a || traveled x > 300 = filterlist xs as
                          | otherwise             = x : filterlist xs as
 
 
@@ -95,32 +95,34 @@ updateInputDown gstate | 'w' `elem` pg = updateInputDown gstate { player = (play
                        | 'a' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px - 2 } }, pressed = removefromList 'a' pg }
                        | 's' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ y = py - 2 } }, pressed = removefromList 's' pg }
                        | 'd' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px + 2 } }, pressed = removefromList 'd' pg }
-                       | 'j' `elem` pg = updateInputDown gstate 
-                       { projectiles = Projectile ((cpos (player gstate)){x = 20 + x (cpos (player gstate))}) 2 3 (Model.Rectangle 5 5) 0 : projectiles gstate, pressed = removefromList 'j' pg }
+                       | 'j' `elem` pg && shootTimer gstate >= 0.3 = gstate 
+                       { projectiles = Projectile ((cpos (player gstate)){x = 20 + x (cpos (player gstate))}) 2 3 (Model.Rectangle 5 5) 0 : projectiles gstate, pressed = removefromList 'j' pg, shootTimer = 0 }
                        | otherwise                 = gstate
     where px = x (cpos (player gstate))
           py = y (cpos (player gstate))
           pg = pressed gstate
 
 moveprojectiles :: [Projectile] -> [Projectile] -> [Projectile]
-moveprojectiles [] _ = []
-moveprojectiles [a] done = done ++ [b]
-    where b =  a { ppos = (ppos a){ x = x(ppos a) + speed a }, traveled = traveled a + speed a }
-moveprojectiles (a:as) done = moveprojectiles as (done ++ [b])
-    where b =  a { ppos = (ppos a){ x = x(ppos a) + speed a }, traveled = traveled a + speed a }
+moveprojectiles p done = case p of
+                         []     -> []
+                         [a]    -> done ++ b a
+                         (a:as) -> moveprojectiles as (done ++ b a)
+    where b c | traveled c + speed c < 300 = [c { ppos = (ppos c){ x = x(ppos c) + speed c }, traveled = traveled c + speed c }]
+              | otherwise                 = []
 
 chaseEnemy :: [Character] -> [Character] -> Character -> [Character]
-chaseEnemy [] _ _= []
-chaseEnemy [a] done p | cType a == "Chase" = done ++ [b]
-                      | otherwise = done ++ [a]
-    where b | x (cpos a) >= x (cpos p) && y (cpos a) <= y (cpos p) = a { cpos = (cpos a){ x = x(cpos a) - cSpeed a } { y = y(cpos a) + cSpeed a }}
-            | x (cpos a) >= x (cpos p) && y (cpos a) >= y (cpos p) = a { cpos = (cpos a){ x = x(cpos a) - cSpeed a } { y = y(cpos a) - cSpeed a }}
-            | otherwise = a { cpos = (cpos a){ x = x(cpos a) - cSpeed a }}
-chaseEnemy (a:as) done p | cType a == "Chase" = chaseEnemy as (done ++ [b]) p
-                         | otherwise = chaseEnemy as (done ++ [a]) p
-    where b | x (cpos a) >= x (cpos p) && y (cpos a) <= y (cpos p) = a { cpos = (cpos a){ x = x(cpos a) - cSpeed a } { y = y(cpos a) + cSpeed a }}
-            | x (cpos a) >= x (cpos p) && y (cpos a) >= y (cpos p) = a { cpos = (cpos a){ x = x(cpos a) - cSpeed a } { y = y(cpos a) - cSpeed a }}
-            | otherwise = a { cpos = (cpos a){ x = x(cpos a) - cSpeed a }}
+chaseEnemy chars done p = case chars of
+                          [] -> []
+                          [a] -> checktype a
+                          (a:as) -> recchecktype a as
+    where checktype i | cType i == "Chase" = done ++ [b i]
+                      | otherwise = done ++ [i]
+          recchecktype i j | cType i == "Chase" = chaseEnemy j (done ++ [b i]) p
+                           | otherwise = chaseEnemy j (done ++ [i]) p
+          b c | x (cpos c) >= x (cpos p) && y (cpos c) <= y (cpos p) = c { cpos = (cpos c){ x = x(cpos c) - cSpeed c, y = y(cpos c) + cSpeed c } }
+              | x (cpos c) >= x (cpos p) && y (cpos c) >= y (cpos p) = c { cpos = (cpos c){ x = x(cpos c) - cSpeed c , y = y(cpos c) - cSpeed c } }
+              | otherwise = c { cpos = (cpos c){ x = x(cpos c) - cSpeed c } }
+
 
 -- | Handle user input
 input :: Event -> GameState -> IO GameState
