@@ -17,21 +17,27 @@ step secs gstate | paused gstate = return gstate --if the game is paused,
                  | otherwise                     =
                    return updategstate
     where 
-          updateinput = updateInputDown gstate { projectiles = moveprojectiles (projectiles gstate) [], shootTimer = shootTimer gstate + secs }
+          updatetime = gstate { player = (player gstate) { shootTimer = shootTimer (player gstate) + secs }, currentenemies = enemyshoottime (currentenemies gstate) secs, explosions = explosiontime (explosions gstate) secs  }
+          updateinput = updateInputDown updatetime { player = (player updatetime) { shootTimer = shootTimer (player updatetime) + secs }, projectiles = moveprojectiles (projectiles gstate) [] }
           updatechar = characterhit (projectiles updateinput) (currentenemies updateinput)
           updateproj = projectilehit (projectiles updateinput) (currentenemies updateinput)
-          updatedead = addDead (updateinput { currentenemies = updatechar, explosions = updatetime (explosions updateinput) secs })
-          updatechase = chaseEnemy (currentenemies updatedead) [] (player updateinput)
+          updatedead = addDead (updateinput { currentenemies = updatechar})
+          updatechase = chaseEnemy (currentenemies updatedead) [] (player updateinput) 
           updatenormalchar = normalEnemy (-200) updatechase []
-          updategstate = gstate{ elapsedTime = elapsedTime gstate + secs, currentenemies = updatenormalchar, player = player updateinput, projectiles = updateproj, explosions = explosions updatedead, shootTimer = shootTimer updateinput } 
+          updategstate = gstate{ elapsedTime = elapsedTime gstate + secs, currentenemies = updatenormalchar, player = player updateinput, projectiles = updateproj, explosions = explosions updatedead } 
              
 
-updatetime :: [Explosion] -> Float -> [Explosion]
-updatetime [] _ = []
-updatetime [a] secs | timer a > 2 = []
-                    | otherwise   = [a{ timer = timer a + secs }]
-updatetime (a:as) secs | timer a > 2 = updatetime as secs
-                       | otherwise   = a{ timer = timer a + secs } : updatetime as secs
+explosiontime :: [Explosion] -> Float -> [Explosion]
+explosiontime [] _ = []
+explosiontime [a] secs | timer a > 2 = []
+                       | otherwise   = [a{ timer = timer a + secs }]
+explosiontime (a:as) secs | timer a > 2 = explosiontime as secs
+                          | otherwise   = a{ timer = timer a + secs } : explosiontime as secs
+
+enemyshoottime :: [Character] -> Float -> [Character]
+enemyshoottime [] _ = []
+enemyshoottime [a] secs = [a { shootTimer = shootTimer a + secs }]
+enemyshoottime (a:as) secs = a { shootTimer = shootTimer a + secs } : enemyshoottime as secs
 
 newce :: GameState -> [Character]
 newce gstate =  case waves gstate of
@@ -96,8 +102,8 @@ updateInputDown gstate | 'w' `elem` pg = updateInputDown gstate { player = (play
                        | 'a' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px - 2 } }, pressed = removefromList 'a' pg }
                        | 's' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ y = py - 2 } }, pressed = removefromList 's' pg }
                        | 'd' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px + 2 } }, pressed = removefromList 'd' pg }
-                       | 'j' `elem` pg && shootTimer gstate >= 0.3 = gstate 
-                       { projectiles = Projectile ((cpos (player gstate)){x = 20 + x (cpos (player gstate))}) 2 3 (Model.Rectangle 5 5) 0 : projectiles gstate, pressed = removefromList 'j' pg, shootTimer = 0 }
+                       | 'j' `elem` pg && shootTimer (player gstate) >= 0.3 = gstate 
+                       { player = (player gstate) { shootTimer = 0 }, projectiles = Projectile ((cpos (player gstate)){x = 20 + x (cpos (player gstate))}) 2 3 (Model.Rectangle 5 5) 0 : projectiles gstate, pressed = removefromList 'j' pg }
                        | otherwise                 = gstate
     where px = x (cpos (player gstate))
           py = y (cpos (player gstate))
