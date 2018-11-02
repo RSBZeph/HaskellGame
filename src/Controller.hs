@@ -21,8 +21,9 @@ step secs gstate | paused gstate = return gstate --if the game is paused,
           updatechar = characterhit (projectiles updateinput) (currentenemies updateinput)
           updateproj = projectilehit (projectiles updateinput) (currentenemies updateinput)
           updatedead = addDead (updateinput { currentenemies = updatechar, explosions = updatetime (explosions updateinput) secs })
-          updatechase = chaseEnemy (currentenemies updatedead) [] (player updateinput) 
-          updategstate = gstate{ elapsedTime = elapsedTime gstate + secs, currentenemies = updatechase, player = player updateinput, projectiles = updateproj, explosions = explosions updatedead, shootTimer = shootTimer updateinput } 
+          updatechase = chaseEnemy (currentenemies updatedead) [] (player updateinput)
+          updatenormalchar = normalEnemy (-200) updatechase []
+          updategstate = gstate{ elapsedTime = elapsedTime gstate + secs, currentenemies = updatenormalchar, player = player updateinput, projectiles = updateproj, explosions = explosions updatedead, shootTimer = shootTimer updateinput } 
              
 
 updatetime :: [Explosion] -> Float -> [Explosion]
@@ -123,7 +124,19 @@ chaseEnemy chars done p = case chars of
               | x (cpos c) >= x (cpos p) && y (cpos c) >= y (cpos p) = c { cpos = (cpos c){ x = x(cpos c) - cSpeed c , y = y(cpos c) - cSpeed c } }
               | otherwise = c { cpos = (cpos c){ x = x(cpos c) - cSpeed c } }
 
-
+normalEnemy :: Float -> [Character] -> [Character] -> [Character]
+normalEnemy posx chars done = case chars of
+                             [] -> []
+                             [a] -> checktype a
+                             (a:as) -> recchecktype a as
+    where checktype i | cType i == "Normal" = done ++ [b i]
+                      | otherwise = done ++ [i]
+          recchecktype i j | cType i == "Normal" = normalEnemy posx j (done ++ [b i]) 
+                           | otherwise = normalEnemy posx j (done ++ [i]) 
+          b c | posx < x (cpos c) = c { cpos = (cpos c){ x = x(cpos c) - cSpeed c } } 
+              | otherwise = c
+--moveUpDown :: Character -> Character
+--moveUpDown c | x (cpos c) >= 300 
 -- | Handle user input
 input :: Event -> GameState -> IO GameState
 input e gstate = return (inputKey e gstate)
