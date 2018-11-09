@@ -30,7 +30,7 @@ initialState :: GameState
 initialState = GameState 0 (Character (Position (-600) 0) (Rectangle 40 40) 300 2 "Player" 0 0) level1 [] [] [] [] False True False
 
 level1 :: [[Character]]
-level1 = [[Character (Position 721 (-100)) (Rectangle 40 40) 1 1.8 "Chase" 0 5,Character (Position 721 200) (Rectangle 40 40) 40 1.8 "nietChase" 0 7],[Character (Position 721 (0)) (Rectangle 40 40) 10 1.8 "Chase" 0 6]]
+level1 = [[Character (Position 721 (-100)) (Rectangle 40 40) 1 1.8 "Chase" 0 5,Character (Position 721 200) (Rectangle 40 40) 40 1.8 "Normal" 0 7],[Character (Position 721 (0)) (Rectangle 40 40) 10 1.8 "Chase" 0 6]]
 
 removefromList :: Eq a => a -> [a] -> [a]
 removefromList _ []                 = []

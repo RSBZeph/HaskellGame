@@ -23,7 +23,8 @@ step secs gstate | paused gstate || mainmenu gstate || scoremenu gstate = return
           updateproj = projectilehit (projectiles updateinput) (currentenemies updateinput)
           updatedead = addDead (updateinput { currentenemies = updatechar})
           updatechase = chaseEnemy (currentenemies updatedead) [] (player updateinput) 
-          updategstate = gstate{ elapsedTime = elapsedTime gstate + secs, currentenemies = updatechase, player = (player updateinput) { score = score (player updatedead) }, projectiles = updateproj, explosions = explosions updatedead } 
+          updatenormalchar = normalEnemy (-200) updatechase []
+          updategstate = gstate{ elapsedTime = elapsedTime gstate + secs, currentenemies = updatenormalchar, player = player updateinput, projectiles = updateproj, explosions = explosions updatedead } 
              
 
 explosiontime :: [Explosion] -> Float -> [Explosion]
@@ -131,6 +132,20 @@ updateInputDown gstate | 'w' `elem` pg = updateInputDown gstate { player = (play
     where px = x (cpos (player gstate))
           py = y (cpos (player gstate))
           pg = pressed gstate
+
+normalEnemy :: Float -> [Character] -> [Character] -> [Character]
+normalEnemy posx chars done = case chars of
+                             [] -> []
+                             [a] -> checktype a
+                             (a:as) -> recchecktype a as
+    where checktype i | cType i == "Normal" = done ++ [b i]
+                      | otherwise = done ++ [i]
+          recchecktype i j | cType i == "Normal" = normalEnemy posx j (done ++ [b i]) 
+                           | otherwise = normalEnemy posx j (done ++ [i]) 
+          b c | posx < x (cpos c) = c { cpos = (cpos c){ x = x(cpos c) - cSpeed c } } 
+              | otherwise = c
+--moveUpDown :: Character -> Character
+--moveUpDown c | x (cpos c) >= 300 
 
 
 -- | Handle user input
