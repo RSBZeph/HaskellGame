@@ -11,10 +11,10 @@ import Data.List
 
 -- | Handle one iteration of the game (update)
 step :: Float -> GameState -> IO GameState
-step secs gstate | paused gstate = return gstate --if the game is paused,
-                 | elapsedTime gstate > wavetime =
+step secs gstate | paused gstate || mainmenu gstate || scoremenu gstate = return gstate --only update the game if you're out of the menus
+                 | elapsedTime gstate > wavetime       =
                    return $ updategstate { elapsedTime = elapsedTime updategstate - wavetime, waves = newwvs gstate, currentenemies = newce updategstate } -- add a wave after a certain period of time
-                 | otherwise                     =
+                 | otherwise                           =
                    return updategstate
     where 
           updatetime = gstate { player = (player gstate) { shootTimer = shootTimer (player gstate) + secs }, currentenemies = enemyshoottime (currentenemies gstate) secs, explosions = explosiontime (explosions gstate) secs  }
@@ -126,6 +126,7 @@ updateInputDown gstate | 'w' `elem` pg = updateInputDown gstate { player = (play
                        | 'd' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px + 2 } }, pressed = removefromList 'd' pg }
                        | 'j' `elem` pg && shootTimer (player gstate) >= 0.3 = gstate 
                        { player = (player gstate) { shootTimer = 0 }, projectiles = Projectile ((cpos (player gstate)){x = 20 + x (cpos (player gstate))}) 2 3 (Model.Rectangle 5 5) 0 : projectiles gstate, pressed = removefromList 'j' pg }
+                       
                        | otherwise                 = gstate
     where px = x (cpos (player gstate))
           py = y (cpos (player gstate))
@@ -137,7 +138,9 @@ input :: Event -> GameState -> IO GameState
 input e gstate = return (inputKey e gstate)
 
 inputKey :: Event -> GameState -> GameState
-inputKey event@(EventKey (Char c) keystate _ _) gstate | not (paused gstate) = getw event gstate
+inputKey event@(EventKey (Char c) keystate _ _) gstate | mainmenu gstate     = geti event gstate --if you're in the main menu, only check i and o
+                                                       | scoremenu gstate    = geto event gstate 
+                                                       | not (paused gstate) = getw event gstate
                                                        | otherwise           = getp event gstate --if the game is paused, only check if the player is unpausing or not
 inputKey _ gstate = gstate -- Otherwise keep the same
 
@@ -172,6 +175,23 @@ getj event@(EventKey (Char c) keystate _ _) gstate = getp event newstate
                    | otherwise                    = gstate                     
 
 getp :: Event -> GameState -> GameState
-getp (EventKey (Char c) keystate _ _) gstate = newstate
-    where newstate | c == 'p' && keystate == Down = updateInputDown gstate { paused = not (paused gstate)}
-                   | otherwise                    = gstate                           
+getp event@(EventKey (Char c) keystate _ _) gstate = getq event newstate
+    where newstate | c == 'p' && keystate == Down = gstate { paused = not (paused gstate) }
+                   | otherwise                    = gstate   
+                   
+getq :: Event -> GameState -> GameState
+getq (EventKey (Char c) keystate _ _) gstate = newstate
+    where newstate | paused gstate && c == 'q' && keystate == Down = gstate { mainmenu = True, paused = False }
+                   | otherwise                                     = gstate
+    
+
+--this input is only usefull in the menus                   
+geti :: Event -> GameState -> GameState
+geti event@(EventKey (Char c) keystate _ _) gstate = geto event newstate
+    where newstate | mainmenu gstate && c == 'i' && keystate == Down = initialState { mainmenu = False }
+                   | otherwise                                       = gstate  
+
+geto :: Event -> GameState -> GameState
+geto event@(EventKey (Char c) keystate _ _) gstate = newstate
+    where newstate | c == 'o' && keystate == Down = gstate { scoremenu = not (scoremenu gstate), mainmenu = not (mainmenu gstate) }
+                   | otherwise                    = gstate     

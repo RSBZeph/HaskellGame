@@ -6,11 +6,13 @@ import Graphics.Gloss
 import Model
 
 view :: GameState -> IO Picture
-view gstate = return (pictures [viewenemies, viewplayer, viewprojectiles, viewpause, viewdead, viewscore])
+view gstate | mainmenu gstate  = return (pictures [translate (-200) 0 (scale 0.25 0.25 (color red (Text "Press I to start"))), translate (-200) (-200) (scale 0.25 0.25 (color red (Text "Press O to view highscores")))])
+            | scoremenu gstate = return (pictures [translate (-200) 0 (scale 0.25 0.25 (color red (Text "Press O to return to menu")))])
+            | otherwise        = return (pictures [viewenemies, viewplayer, viewprojectiles, viewpause, viewdead, viewscore])
     where viewplayer = viewPlayer gstate
           viewenemies = pictures (map ctoPicture (currentenemies gstate))
           viewprojectiles = pictures (map ptoPicture (projectiles gstate))
-          viewpause | paused gstate = translate (-200) 0 (color red (Text "Paused"))
+          viewpause | paused gstate = pictures [translate (-200) 0 (color red (Text "Paused")), translate (-200) (-100) (scale 0.25 0.25 (color red (Text "Press Q to return to menu")))]
                     | otherwise     = Blank
           viewdead = viewDead (explosions gstate)
           viewscore = translate (-690) 235 (scale 0.5 0.5 (color red (Text (show (score (player gstate))))))
