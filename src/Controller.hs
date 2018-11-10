@@ -23,7 +23,7 @@ step secs gstate | paused gstate || mainmenu gstate || scoremenu gstate = return
           updateproj = projectilehit (projectiles updateinput) (currentenemies updateinput)
           updatedead = addDead (updateinput { currentenemies = updatechar})
           updatechase = chaseEnemy (currentenemies updatedead) [] (player updateinput) 
-          updatenormalchar = normalEnemy (-200) updatechase []
+          updatenormalchar = normalEnemy (-100) updatechase []
           updategstate = gstate{ elapsedTime = elapsedTime gstate + secs, currentenemies = updatenormalchar, player = player updateinput, projectiles = updateproj, explosions = explosions updatedead } 
              
 
@@ -143,9 +143,15 @@ normalEnemy posx chars done = case chars of
           recchecktype i j | cType i == "Normal" = normalEnemy posx j (done ++ [b i]) 
                            | otherwise = normalEnemy posx j (done ++ [i]) 
           b c | posx < x (cpos c) = c { cpos = (cpos c){ x = x(cpos c) - cSpeed c } } 
-              | otherwise = c
---moveUpDown :: Character -> Character
---moveUpDown c | x (cpos c) >= 300 
+              | otherwise = moveUpDown c
+
+moveUpDown :: Character -> Character
+moveUpDown c | up c == True && y (cpos c) >= 260 = c { cpos = (cpos c){ y = 259 }, up = False } 
+             | up c == True && y (cpos c) < 260 = c { cpos = (cpos c){ y = y(cpos c) + cSpeed c } }
+             | up c == False && y (cpos c) <= (-260) = c { cpos = (cpos c){ y = (-259) }, up = True }
+             | otherwise = c { cpos = (cpos c){ y = y(cpos c) - cSpeed c } }
+
+
 
 
 -- | Handle user input
