@@ -48,13 +48,6 @@ enemyshoottime [] _ = []
 enemyshoottime [a] secs = [a { shootTimer = shootTimer a + secs }]
 enemyshoottime (a:as) secs = a { shootTimer = shootTimer a + secs } : enemyshoottime as secs
 
-<<<<<<< HEAD
---Changes the gamestate to m
-enemyshootgstate :: GameState -> GameState
-enemyshootgstate gstate = gstate {currentenemies = resetEnemyTimer (currentenemies gstate), projectiles = projectiles gstate ++ enemyshoot (currentenemies gstate) }
-
-=======
->>>>>>> 4d5130a0947b59dc856596e9a2b8994326f9313a
 enemyshoot :: [Character] -> [Projectile]
 enemyshoot [] = []
 enemyshoot [c] | shootTimer c >= 1 = [Projectile ((cpos c){x = x (cpos c) - 40}) 50 3 (Model.Rectangle 5 5) 0 EnemyO]
