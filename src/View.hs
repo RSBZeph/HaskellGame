@@ -47,4 +47,6 @@ ctoPicture c = case shape c of
 
 ptoPicture :: Projectile -> Picture
 ptoPicture p = case s p of
-  Model.Rectangle a b -> translate (x (ppos p)) (y (ppos p)) (color red (scale (b/a) 1 (Circle a)))    
+  Model.Rectangle a b -> checktype
+    where checktype | typeO p == PlayerO = translate (x (ppos p)) (y (ppos p)) (color yellow (scale (b/a) 1 (Circle a)))    
+                    | otherwise          = translate (x (ppos p)) (y (ppos p)) (color red (scale (b/a) 1 (Circle a)))    
