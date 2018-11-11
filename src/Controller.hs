@@ -19,12 +19,13 @@ step secs gstate | paused gstate || mainmenu gstate || scoremenu gstate = return
     where 
           updatetime = gstate { player = (player gstate) { shootTimer = shootTimer (player gstate) + secs }, currentenemies = enemyshoottime (currentenemies gstate) secs, explosions = explosiontime (explosions gstate) secs  }
           updateinput = updateInputDown updatetime { player = (player updatetime) { shootTimer = shootTimer (player updatetime) + secs }, projectiles = moveprojectiles (projectiles gstate) [] }
-          updatechar = characterhit (projectiles updateinput) (currentenemies updateinput)
-          updateproj = projectilehit (projectiles updateinput) (currentenemies updateinput)
-          updatedead = addDead (updateinput { currentenemies = updatechar})
-          updatechase = chaseEnemy (currentenemies updatedead) [] (player updateinput) 
+          updateshootenemy = enemyshootgstate updateinput 
+          updatechar = characterhit (projectiles updateshootenemy) (currentenemies updateshootenemy)
+          updateproj = projectilehit (projectiles updateshootenemy) (currentenemies updateshootenemy)
+          updatedead = addDead (updateshootenemy { currentenemies = updatechar})
+          updatechase = chaseEnemy (currentenemies updatedead) [] (player updateshootenemy) 
           updatenormalchar = normalEnemy (-100) updatechase []
-          updategstate = gstate{ elapsedTime = elapsedTime gstate + secs, currentenemies = updatenormalchar, player = player updateinput, projectiles = updateproj, explosions = explosions updatedead } 
+          updategstate = gstate{ elapsedTime = elapsedTime gstate + secs, currentenemies = updatenormalchar, player = player updateshootenemy, projectiles = updateproj, explosions = explosions updatedead } 
              
 
 explosiontime :: [Explosion] -> Float -> [Explosion]
@@ -38,6 +39,27 @@ enemyshoottime :: [Character] -> Float -> [Character]
 enemyshoottime [] _ = []
 enemyshoottime [a] secs = [a { shootTimer = shootTimer a + secs }]
 enemyshoottime (a:as) secs = a { shootTimer = shootTimer a + secs } : enemyshoottime as secs
+
+enemyshootgstate :: GameState -> GameState
+enemyshootgstate gstate = gstate {currentenemies = resetEnemyTimer (currentenemies gstate), projectiles = (projectiles gstate) ++ (enemyshoot (currentenemies gstate)) }
+
+enemyshoot :: [Character] -> [Projectile]
+enemyshoot [] = []
+enemyshoot [c] | shootTimer c >= 500 = Projectile ((cpos c){x = 200 - x (cpos c)}) 2 3 (Model.Rectangle 5 5) 0 EnemyO : []
+               | otherwise           = []
+enemyshoot (c:cs) | shootTimer c >= 500 = Projectile ((cpos c){x = 200 - x (cpos c)}) 2 3 (Model.Rectangle 5 5) 0 EnemyO : enemyshoot cs
+                  | otherwise           = enemyshoot cs
+
+
+resetEnemyTimer :: [Character] -> [Character]
+resetEnemyTimer [] = []
+resetEnemyTimer [x] | shootTimer x >= 500 = x {shootTimer = 0} : []
+                    | otherwise           = [x]
+resetEnemyTimer (x:xs) | shootTimer x >= 500 = x {shootTimer = 0} : resetEnemyTimer xs
+                       | otherwise           = x : resetEnemyTimer xs
+
+--enemyshoot [] = []
+--enemyshoot [x] = shootTimer x >= 500 = 
 
 newce :: GameState -> [Character]
 newce gstate =  case waves gstate of
@@ -55,16 +77,17 @@ newwvs gstate = case waves gstate of
 characterhit :: [Projectile] -> [Character] -> [Character]
 characterhit [] c = c
 characterhit [x] c = characterhit' x c
-characterhit (x:xs) c = characterhit xs newc
-    where newc = characterhit' x c
+characterhit (x:xs) c = characterhit xs (characterhit' x c)
+
+    --where newc = characterhit' x c
 
 characterhit' :: Projectile -> [Character] -> [Character]
 characterhit' p [] = []
-characterhit' p [a] | boxCollision (s p, ppos p) (shape a, cpos a) = [a{ health = health a - damage p }]
-                    | otherwise                                    = [a]
-characterhit' p (a:as) | boxCollision (s p, ppos p) (shape a, cpos a) = a{ health = health a - damage p } : as
-                       | otherwise                                    = a : characterhit' p as
-
+characterhit' p [a] | boxCollision (s p, ppos p) (shape a, cpos a) && ((typeO p == PlayerO && typeOC a == EnemyO) || (typeO p == EnemyO && typeOC a == PlayerO)) = [a{ health = health a - damage p }]
+                    | otherwise                                                                                                                                  = [a]
+characterhit' p (a:as) | boxCollision (s p, ppos p) (shape a, cpos a) && ((typeO p == PlayerO && typeOC a == EnemyO) || (typeO p == EnemyO && typeOC a == PlayerO)) = a{ health = health a - damage p } : as
+                       | otherwise                                                                                                                                  = a : characterhit' p as
+            
 
 --if an enemy has <= 0 health, remove it and add it to the explosions list
 addDead :: GameState -> GameState
@@ -126,7 +149,7 @@ updateInputDown gstate | 'w' `elem` pg = updateInputDown gstate { player = (play
                        | 's' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ y = py - 2 } }, pressed = removefromList 's' pg }
                        | 'd' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px + 2 } }, pressed = removefromList 'd' pg }
                        | 'j' `elem` pg && shootTimer (player gstate) >= 0.3 = gstate 
-                       { player = (player gstate) { shootTimer = 0 }, projectiles = Projectile ((cpos (player gstate)){x = 20 + x (cpos (player gstate))}) 2 3 (Model.Rectangle 5 5) 0 : projectiles gstate, pressed = removefromList 'j' pg }
+                       { player = (player gstate) { shootTimer = 0 }, projectiles = Projectile ((cpos (player gstate)){x = 20 + x (cpos (player gstate))}) 2 3 (Model.Rectangle 5 5) 0 PlayerO : projectiles gstate, pressed = removefromList 'j' pg }
                        
                        | otherwise                 = gstate
     where px = x (cpos (player gstate))
@@ -142,7 +165,7 @@ normalEnemy posx chars done = case chars of
                       | otherwise = done ++ [i]
           recchecktype i j | cType i == "Normal" = normalEnemy posx j (done ++ [b i]) 
                            | otherwise = normalEnemy posx j (done ++ [i]) 
-          b c | posx < x (cpos c) = c { cpos = (cpos c){ x = x(cpos c) - cSpeed c } } 
+          b c | posx < x (cpos c) = moveUpDown c { cpos = (cpos c){ x = x(cpos c) - cSpeed c } } 
               | otherwise = moveUpDown c
 
 moveUpDown :: Character -> Character

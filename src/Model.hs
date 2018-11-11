@@ -5,9 +5,16 @@ module Model where
 newtype Name = Name String
 data Position = Position {x :: Float, y :: Float}
 data Shape = Rectangle { width :: Float, height :: Float }
+data TypeObject = EnemyO | PlayerO
+ deriving (Eq, Ord)
+
+--instance Show TypeObject where
+ --show enemyO = "Enemy"
+ --show playerO = "Player"
+ 
            
-data Character = Character { cpos :: Position, shape :: Shape, health :: Float, cSpeed :: Float, cType :: String, shootTimer :: Float, score :: Int, up :: Bool }
-data Projectile = Projectile { ppos :: Position, damage :: Float, speed :: Float, s :: Shape, traveled :: Float }
+data Character = Character { cpos :: Position, shape :: Shape, health :: Float, cSpeed :: Float, cType :: String, shootTimer :: Float, score :: Int, up :: Bool, typeOC :: TypeObject }
+data Projectile = Projectile { ppos :: Position, damage :: Float, speed :: Float, s :: Shape, traveled :: Float, typeO :: TypeObject }
 data Explosion = Explosion { epos :: Position, radius :: Float, timer :: Float}
 
 wavetime :: Float
@@ -27,10 +34,10 @@ data GameState = GameState {
                  }
 
 initialState :: GameState
-initialState = GameState 0 (Character (Position (-600) 0) (Rectangle 40 40) 300 2 "Player" 0 0 False) level1 [] [] [] [] False True False
+initialState = GameState 0 (Character (Position (-600) 0) (Rectangle 40 40) 300 2 "Player" 0 0 False PlayerO) level1 [] [] [] [] False True False
 
 level1 :: [[Character]]
-level1 = [[Character (Position 721 (-100)) (Rectangle 40 40) 1 1.8 "Chase" 0 5 False,Character (Position 721 200) (Rectangle 40 40) 40 1.8 "Normal" 0 7 True],[Character (Position 721 (0)) (Rectangle 40 40) 10 1.8 "Chase" 0 6 False]]
+level1 = [[Character (Position 721 (-100)) (Rectangle 40 40) 1 1.8 "Chase" 0 5 False EnemyO,Character (Position 721 200) (Rectangle 40 40) 40 1.8 "Normal" 0 7 True EnemyO],[Character (Position 721 (0)) (Rectangle 40 40) 10 1.8 "Chase" 0 6 False EnemyO]]
 
 removefromList :: Eq a => a -> [a] -> [a]
 removefromList _ []                 = []
