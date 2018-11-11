@@ -9,16 +9,17 @@ import Data.List
 import KeyInputs
 
 -- | Handle one iteration of the game (update)
-step :: [Int] -> Float -> GameState -> IO GameState
-step wavenrs secs gstate | paused gstate || mainmenu gstate || scoremenu gstate || gameover gstate = return gstate --only update the game if you're out of the menus
-                         | elapsedTime gstate > wavetime       =
-                           return $ updategstate { elapsedTime = elapsedTime updategstate - wavetime, waves = newwvs gstate, currentenemies = newce updategstate } -- add a wave after a certain period of time
-                         | otherwise                           =
-                           return updategstate
+step :: Float -> GameState -> IO GameState
+step secs gstate | paused gstate || mainmenu gstate || scoremenu gstate || gameover gstate = return gstate --only update the game if you're out of the menus
+                       | elapsedTime gstate > wavetime       =
+                         return $ updategstate { elapsedTime = elapsedTime updategstate - wavetime, currentenemies = currentenemies updategstate ++ choseWave a, wavenumbers = as } -- add a wave after a certain period of time
+                       | otherwise                           =
+                         return updategstate
     where 
+          (a:as) = wavenumbers gstate
           updatetime = gstate { player = (player gstate) { shootTimer = shootTimer (player gstate) + secs }, currentenemies = enemyshoottime (currentenemies gstate) secs, explosions = explosiontime (explosions gstate) secs  }
           updateinput = updateInputDown updatetime { player = (player updatetime) { shootTimer = shootTimer (player updatetime) + secs }, projectiles = moveprojectiles (projectiles gstate) [] }
-          updateshootenemy = enemyshootgstate updateinput 
+          updateshootenemy = updateinput {currentenemies = resetEnemyTimer (currentenemies updateinput), projectiles = projectiles updateinput ++ enemyshoot (currentenemies updateinput) }
           updateenemies = characterhit (projectiles updateshootenemy) (currentenemies updateshootenemy)
           updateproj = projectilehit (projectiles updateshootenemy) (currentenemies updateshootenemy)
           updatedead = addDead (updateshootenemy { currentenemies = updateenemies})
@@ -47,10 +48,13 @@ enemyshoottime [] _ = []
 enemyshoottime [a] secs = [a { shootTimer = shootTimer a + secs }]
 enemyshoottime (a:as) secs = a { shootTimer = shootTimer a + secs } : enemyshoottime as secs
 
+<<<<<<< HEAD
 --Changes the gamestate to m
 enemyshootgstate :: GameState -> GameState
 enemyshootgstate gstate = gstate {currentenemies = resetEnemyTimer (currentenemies gstate), projectiles = projectiles gstate ++ enemyshoot (currentenemies gstate) }
 
+=======
+>>>>>>> 4d5130a0947b59dc856596e9a2b8994326f9313a
 enemyshoot :: [Character] -> [Projectile]
 enemyshoot [] = []
 enemyshoot [c] | shootTimer c >= 1 = [Projectile ((cpos c){x = x (cpos c) - 40}) 50 3 (Model.Rectangle 5 5) 0 EnemyO]
@@ -65,18 +69,6 @@ resetEnemyTimer [x] | shootTimer x >= 1 = [x {shootTimer = 0}]
                     | otherwise           = [x]
 resetEnemyTimer (x:xs) | shootTimer x >= 1 = x {shootTimer = 0} : resetEnemyTimer xs
                        | otherwise           = x : resetEnemyTimer xs
-
-newce :: GameState -> [Character]
-newce gstate =  case waves gstate of
-                    []     -> currentenemies gstate
-                    [a]    -> currentenemies gstate ++ a
-                    (a:_)  -> currentenemies gstate ++ a
-
-newwvs :: GameState -> [[Character]]
-newwvs gstate = case waves gstate of
-                    []     -> []
-                    [_]    -> []
-                    (a:as) -> as
 
 --check if a character gets hit by a bullet, reduce its lifepoints by the bullet's damage
 characterhit :: [Projectile] -> [Character] -> [Character]

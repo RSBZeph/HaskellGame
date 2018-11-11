@@ -1,10 +1,7 @@
 module KeyInputs where
 
 import Model
-import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
-import System.Random
-import Data.List
 
 -- | Handle user input
 
@@ -80,7 +77,7 @@ getq (EventKey (Char c) keystate _ _) gstate = newstate
 --this input is only usefull in the menus                   
 geti :: Event -> GameState -> GameState
 geti event@(EventKey (Char c) keystate _ _) gstate = geto event newstate
-    where newstate | mainmenu gstate && c == 'i' && keystate == Down = initialState { mainmenu = False }
+    where newstate | mainmenu gstate && c == 'i' && keystate == Down = (initialState (wavenumbers gstate)) { mainmenu = False }
                    | otherwise                                       = gstate  
 
 geto :: Event -> GameState -> GameState
