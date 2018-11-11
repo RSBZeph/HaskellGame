@@ -3,11 +3,10 @@
 module Model where
 
 --our types
-newtype Name = Name String
 data Position = Position {x :: Float, y :: Float}
 data Shape = Rectangle { width :: Float, height :: Float }
 data TypeObject = EnemyO | PlayerO --this is the type of an object so for example a projectile from an enemy has type EnemyO just like enemy
- deriving (Eq, Ord)           
+ deriving (Eq)           
 data Character = Character { cpos :: Position, shape :: Shape, health :: Float, cSpeed :: Float, cType :: String, shootTimer :: Float, score :: Int, up :: Bool, typeOC :: TypeObject }
 data Projectile = Projectile { ppos :: Position, damage :: Float, speed :: Float, s :: Shape, traveled :: Float, typeO :: TypeObject }
 data Explosion = Explosion { epos :: Position, radius :: Float, timer :: Float}
