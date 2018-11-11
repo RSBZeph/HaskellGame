@@ -21,7 +21,7 @@ step secs gstate | paused gstate || mainmenu gstate || scoremenu gstate = return
           updateinput = updateInputDown updatetime { player = (player updatetime) { shootTimer = shootTimer (player updatetime) + secs }, projectiles = moveprojectiles (projectiles gstate) [] }
           updateshootenemy = enemyshootgstate updateinput 
           updatechar = characterhit (projectiles updateshootenemy) (currentenemies updateshootenemy)
-          updateproj = projectilehit (projectiles updateshootenemy) (currentenemies updateshootenemy)
+          updateproj = projectilehit (projectiles updateshootenemy) ((player updateshootenemy) : currentenemies updateshootenemy)
           updatedead = addDead (updateshootenemy { currentenemies = updatechar})
           updatechase = chaseEnemy (currentenemies updatedead) [] (player updateshootenemy) 
           updatenormalchar = normalEnemy (-100) updatechase []
@@ -105,7 +105,7 @@ projectilehit p c = filterlist p bools
 --returns true if the projectile hits a character
 projectilehit' :: [Character] -> Projectile -> Bool
 projectilehit' [] _ = False
-projectilehit' [a] p = boxCollision (s p, ppos p) (shape a, cpos a)
+projectilehit' [a] p = boxCollision (s p, ppos p) (shape a, cpos a)                                                                                                                                              
 projectilehit' (a:as) p | boxCollision (s p, ppos p) (shape a, cpos a) = True
                         | otherwise                                    = projectilehit' as p
 
