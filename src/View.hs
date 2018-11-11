@@ -17,7 +17,7 @@ view highscores gstate | mainmenu gstate  = return (pictures [translate (-200) 0
                     | otherwise     = Blank
           viewdead = viewDead (explosions gstate)
           viewscore = translate (-690) 235 (scale 0.5 0.5 (color red (Text (show (score (player gstate))))))
-          viewhealth = translate (-690) (-290) (scale 0.3 0.3 (color red (Text ("HP : " ++ show (health (player gstate))))))
+          viewhealth = translate (-690) (-290) (scale 0.3 0.3 (color red (Text ("HP : " ++ show (round (health (player gstate)))))))
           viewhighscores = pictures (viewHighscores highscores 0)
 
 viewHighscores :: [String] -> Int -> [Picture]

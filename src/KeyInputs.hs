@@ -1,10 +1,7 @@
 module KeyInputs where
 
 import Model
-import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
-import System.Random
-import Data.List
 
 -- | Handle user input
 

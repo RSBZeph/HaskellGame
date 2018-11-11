@@ -18,7 +18,7 @@ step wavenrs secs gstate | paused gstate || mainmenu gstate || scoremenu gstate 
     where 
           updatetime = gstate { player = (player gstate) { shootTimer = shootTimer (player gstate) + secs }, currentenemies = enemyshoottime (currentenemies gstate) secs, explosions = explosiontime (explosions gstate) secs  }
           updateinput = updateInputDown updatetime { player = (player updatetime) { shootTimer = shootTimer (player updatetime) + secs }, projectiles = moveprojectiles (projectiles gstate) [] }
-          updateshootenemy = enemyshootgstate updateinput 
+          updateshootenemy = updateinput {currentenemies = resetEnemyTimer (currentenemies updateinput), projectiles = projectiles updateinput ++ enemyshoot (currentenemies updateinput) }
           updateenemies = characterhit (projectiles updateshootenemy) (currentenemies updateshootenemy)
           updateproj = projectilehit (projectiles updateshootenemy) (currentenemies updateshootenemy)
           updatedead = addDead (updateshootenemy { currentenemies = updateenemies})
@@ -43,9 +43,6 @@ enemyshoottime :: [Character] -> Float -> [Character]
 enemyshoottime [] _ = []
 enemyshoottime [a] secs = [a { shootTimer = shootTimer a + secs }]
 enemyshoottime (a:as) secs = a { shootTimer = shootTimer a + secs } : enemyshoottime as secs
-
-enemyshootgstate :: GameState -> GameState
-enemyshootgstate gstate = gstate {currentenemies = resetEnemyTimer (currentenemies gstate), projectiles = projectiles gstate ++ enemyshoot (currentenemies gstate) }
 
 enemyshoot :: [Character] -> [Projectile]
 enemyshoot [] = []
