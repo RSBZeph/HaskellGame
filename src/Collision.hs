@@ -26,7 +26,6 @@ characterhit [] c = c
 characterhit [x] c = characterhit' x c
 characterhit (x:xs) c = characterhit xs (characterhit' x c)
 
-
 characterhit' :: Projectile -> [Character] -> [Character]
 characterhit' p [] = []
 characterhit' p [a] | boxCollision (s p, ppos p) (shape a, cpos a) && ((typeO p == PlayerO && typeOC a == EnemyO) || (typeO p == EnemyO && typeOC a == PlayerO)) = [a{ health = health a - damage p }]

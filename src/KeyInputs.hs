@@ -5,7 +5,7 @@ import Model
 import Graphics.Gloss.Interface.IO.Game
 
 
---if a button is pressed, it gets added to the 'pressed' list in gamestate
+--if a button is pressed, the get-methods below will notice and it gets added to the 'pressed' list in gamestate
 --if the button is no longer pressed, it gets removed from the list
 --this method checks which buttons are held down so that their effects (moving, shooting, etc.) may be repeated over several frames
 --instead of only applying on the frame in which the button initially was pressed
