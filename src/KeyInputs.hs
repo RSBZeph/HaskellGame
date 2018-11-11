@@ -14,7 +14,7 @@ updateInputDown gstate | 'w' `elem` pg = updateInputDown gstate { player = (play
                        | 'a' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px - 2 } }, pressed = removefromList 'a' pg }
                        | 's' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ y = py - 2 } }, pressed = removefromList 's' pg }
                        | 'd' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px + 2 } }, pressed = removefromList 'd' pg }
-                       | 'j' `elem` pg && shootTimer (player gstate) >= 0.3 = gstate 
+                       | 'j' `elem` pg && shootTimer (player gstate) >= 0.2 = gstate 
                        { player = (player gstate) { shootTimer = 0 }, projectiles = Projectile ((cpos (player gstate)){x = 35 + x (cpos (player gstate))}) 3 5 (Model.Rectangle 5 5) 0 PlayerO : projectiles gstate, pressed = removefromList 'j' pg }
                        
                        | otherwise                 = gstate

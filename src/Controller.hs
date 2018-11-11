@@ -18,9 +18,9 @@ step secs gstate | paused gstate || mainmenu gstate || scoremenu gstate || gameo
                  | otherwise                    = return updategstate
     where 
           (a:as) = wavenumbers gstate
-          updatetime = gstate { player = (player gstate) { shootTimer = shootTimer (player gstate) + secs }, currentenemies = enemyshoottime (currentenemies gstate) secs, explosions = explosiontime (explosions gstate) secs  }
-          updateinput = updateInputDown updatetime { player = (player updatetime) { shootTimer = shootTimer (player updatetime) + secs }, projectiles = moveprojectiles (projectiles gstate) [] }
-          updateshootenemy = updateinput {currentenemies = resetEnemyTimer (currentenemies updateinput), projectiles = projectiles updateinput ++ enemyshoot (currentenemies updateinput) (elapsedTime gstate) }
+          updatetime = gstate { player = (player gstate) { shootTimer = shootTimer (player gstate) + secs }, currentenemies = enemyshoottime (resetEnemyTimer(currentenemies gstate)) secs, explosions = explosiontime (explosions gstate) secs  }
+          updateinput = updateInputDown updatetime { projectiles = moveprojectiles (projectiles gstate) [] }
+          updateshootenemy = updateinput {projectiles = projectiles updateinput ++ enemyshoot (currentenemies updateinput) (elapsedTime gstate) }
           updateenemies = characterhit (projectiles updateshootenemy) (currentenemies updateshootenemy)
           updateproj = projectilehit (projectiles updateshootenemy) (currentenemies updateshootenemy)
           updatedead = addDead (updateshootenemy { currentenemies = updateenemies})
