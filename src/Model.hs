@@ -2,11 +2,11 @@
 --   which represent the state of the game
 module Model where
 
-
+--our types
 newtype Name = Name String
 data Position = Position {x :: Float, y :: Float}
 data Shape = Rectangle { width :: Float, height :: Float }
-data TypeObject = EnemyO | PlayerO
+data TypeObject = EnemyO | PlayerO --this is the type of an object so for example a projectile from an enemy has type EnemyO just like enemy
  deriving (Eq, Ord)           
 data Character = Character { cpos :: Position, shape :: Shape, health :: Float, cSpeed :: Float, cType :: String, shootTimer :: Float, score :: Int, up :: Bool, typeOC :: TypeObject }
 data Projectile = Projectile { ppos :: Position, damage :: Float, speed :: Float, s :: Shape, traveled :: Float, typeO :: TypeObject }
@@ -29,17 +29,21 @@ data GameState = GameState {
                  , wavenumbers    :: [Int]          --a infinite list of random Ints which is used as index to chose the next wave from the waves list   
                  }
 
+--this is the first Gamestate
 initialState :: [Int] -> GameState
 initialState = GameState 0 (Character (Position (-600) 0) (Rectangle 40 40) 200 2 "Player" 0 0 False PlayerO) [] [] [] [] False True False False
 
+--this will return a wave [Character] it receives a random number to choose it
 choseWave :: Int -> [Character]
 choseWave i = wavesCharacter !! i
 
+--remove something of instance eq from a list
 removefromList :: Eq a => a -> [a] -> [a]
 removefromList _ []                 = []
 removefromList x (y:ys) | x == y    = removefromList x ys
                     | otherwise = y : removefromList x ys
 
+--all our waves we have 10
 wavesCharacter :: [[Character]]
 wavesCharacter = [[Character (Position 740 (-200)) (Rectangle 20 30) 5 1.3 "Chase" 0 1 False EnemyO,
                   Character (Position 721 100) (Rectangle 30 20) 5 1.3 "Normal" 0 1 True EnemyO,
