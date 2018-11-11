@@ -86,7 +86,7 @@ wavesCharacter = [[Character (Position 740 (-200)) (Rectangle 20 30) 5 1.3 "Chas
                   Character (Position 780 0) (Rectangle 50 80) 20 1.0 "Chase" 0 4 False EnemyO],
 
                   [Character (Position 721 (-250)) (Rectangle 20 70) 25 1.5 "Chase" 0 3 False EnemyO,
-                  Character (Position 721 (0)) (Rectangle 20 70) 35 1.5 "Chase" 0 5 False EnemyO,
+                  Character (Position 721 0) (Rectangle 20 70) 35 1.5 "Chase" 0 5 False EnemyO,
                   Character (Position 721 250) (Rectangle 20 70) 25 1.5 "Chase" 0 3 True EnemyO],
 
                   [Character (Position 721 200) (Rectangle 10 25) 5 1.0 "Normal" 0 1 True EnemyO,

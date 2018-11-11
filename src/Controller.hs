@@ -19,12 +19,12 @@ step secs gstate | paused gstate || mainmenu gstate || scoremenu gstate || gameo
     where 
           (a:as) = wavenumbers gstate
           updatetime = gstate { player = (player gstate) { shootTimer = shootTimer (player gstate) + secs }, currentenemies = enemyshoottime (currentenemies gstate) secs, explosions = explosiontime (explosions gstate) secs  }
-          updateinput = updateInputDown updatetime { player = (player updatetime) { shootTimer = shootTimer (player updatetime) + secs }, projectiles = moveprojectiles (projectiles gstate) [] } 
-          updateshootenemy = updateinput {currentenemies = resetEnemyTimer (currentenemies updateinput), projectiles = projectiles updateinput ++ enemyshoot (currentenemies updateinput) }
-          updateenemies = characterhit (projectiles updateshootenemy) (currentenemies updateshootenemy) 
-          updateproj = projectilehit (projectiles updateshootenemy) (currentenemies updateshootenemy) 
-          updatedead = addDead (updateshootenemy { currentenemies = updateenemies}) 
-          updatechase = chaseEnemy (currentenemies updatedead) [] (player updateshootenemy)
+          updateinput = updateInputDown updatetime { player = (player updatetime) { shootTimer = shootTimer (player updatetime) + secs }, projectiles = moveprojectiles (projectiles gstate) [] }
+          updateshootenemy = updateinput {currentenemies = resetEnemyTimer (currentenemies updateinput), projectiles = projectiles updateinput ++ enemyshoot (currentenemies updateinput) (elapsedTime gstate) }
+          updateenemies = characterhit (projectiles updateshootenemy) (currentenemies updateshootenemy)
+          updateproj = projectilehit (projectiles updateshootenemy) (currentenemies updateshootenemy)
+          updatedead = addDead (updateshootenemy { currentenemies = updateenemies})
+          updatechase = chaseEnemy (currentenemies updatedead) [] (player updateshootenemy) 
           updatenormalchar = normalEnemy 0 updatechase []
           updateplayer = playerhit updateshootenemy { projectiles = updateproj }
           updategstate = gstate{ elapsedTime = elapsedTime gstate + secs, currentenemies = updatenormalchar, player = player updateplayer, projectiles = projectiles updateplayer, explosions = explosions updatedead, gameover = health (player gstate) <= 0 } 
