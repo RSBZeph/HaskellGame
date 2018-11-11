@@ -27,11 +27,13 @@ step wavenrs secs gstate | paused gstate || mainmenu gstate || scoremenu gstate 
           updateplayer = playerhit updateshootenemy { projectiles = updateproj }
           updategstate = gstate{ elapsedTime = elapsedTime gstate + secs, currentenemies = updatenormalchar, player = player updateplayer, projectiles = projectiles updateplayer, explosions = explosions updatedead, gameover = health (player gstate) <= 0 } 
 
+--checks if a player is hit by an enemy projectile
 playerhit :: GameState -> GameState
 playerhit gstate = gstate { player = a, projectiles = b }
     where [a] = characterhit (projectiles gstate) [player gstate]
           b   = projectilehit (projectiles gstate) [player gstate]
 
+--checks if the explosion is done and if not then it adds time to the timer
 explosiontime :: [Explosion] -> Float -> [Explosion]
 explosiontime [] _ = []
 explosiontime [a] secs | timer a > 2 = []
@@ -39,11 +41,13 @@ explosiontime [a] secs | timer a > 2 = []
 explosiontime (a:as) secs | timer a > 2 = explosiontime as secs
                           | otherwise   = a{ timer = timer a + secs } : explosiontime as secs
 
+-- Updates the timer the enemies are allowed to shoot
 enemyshoottime :: [Character] -> Float -> [Character]
 enemyshoottime [] _ = []
 enemyshoottime [a] secs = [a { shootTimer = shootTimer a + secs }]
 enemyshoottime (a:as) secs = a { shootTimer = shootTimer a + secs } : enemyshoottime as secs
 
+--Changes the gamestate to m
 enemyshootgstate :: GameState -> GameState
 enemyshootgstate gstate = gstate {currentenemies = resetEnemyTimer (currentenemies gstate), projectiles = projectiles gstate ++ enemyshoot (currentenemies gstate) }
 
