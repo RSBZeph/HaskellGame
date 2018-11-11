@@ -45,17 +45,17 @@ enemyshootgstate gstate = gstate {currentenemies = resetEnemyTimer (currentenemi
 
 enemyshoot :: [Character] -> [Projectile]
 enemyshoot [] = []
-enemyshoot [c] | shootTimer c >= 500 = Projectile ((cpos c){x = 200 - x (cpos c)}) 2 3 (Model.Rectangle 5 5) 0 EnemyO : []
+enemyshoot [c] | shootTimer c >= 0.5 = Projectile ((cpos c){x = x (cpos c) - 40}) 50 3 (Model.Rectangle 5 5) 0 EnemyO : []
                | otherwise           = []
-enemyshoot (c:cs) | shootTimer c >= 500 = Projectile ((cpos c){x = 200 - x (cpos c)}) 2 3 (Model.Rectangle 5 5) 0 EnemyO : enemyshoot cs
+enemyshoot (c:cs) | shootTimer c >= 0.5 = Projectile ((cpos c){x = x (cpos c) - 40}) 50 3 (Model.Rectangle 5 5) 0 EnemyO : enemyshoot cs
                   | otherwise           = enemyshoot cs
 
 
 resetEnemyTimer :: [Character] -> [Character]
 resetEnemyTimer [] = []
-resetEnemyTimer [x] | shootTimer x >= 500 = x {shootTimer = 0} : []
+resetEnemyTimer [x] | shootTimer x >= 0.5 = x {shootTimer = 0} : []
                     | otherwise           = [x]
-resetEnemyTimer (x:xs) | shootTimer x >= 500 = x {shootTimer = 0} : resetEnemyTimer xs
+resetEnemyTimer (x:xs) | shootTimer x >= 0.5 = x {shootTimer = 0} : resetEnemyTimer xs
                        | otherwise           = x : resetEnemyTimer xs
 
 --enemyshoot [] = []
@@ -122,8 +122,9 @@ moveprojectiles p done = case p of
                          []     -> []
                          [a]    -> done ++ b a
                          (a:as) -> moveprojectiles as (done ++ b a)
-    where b c | traveled c + speed c < 1500 = [c { ppos = (ppos c){ x = x(ppos c) + speed c }, traveled = traveled c + speed c }]
-              | otherwise                   = []
+    where b c | traveled c + speed c < 1500 && typeO c == PlayerO = [c { ppos = (ppos c){ x = x(ppos c) + speed c }, traveled = traveled c + speed c }]
+              | traveled c + speed c < 1500 && typeO c == EnemyO  = [c { ppos = (ppos c){ x = x(ppos c) - speed c }, traveled = traveled c + speed c }]
+              | otherwise                                         = []
 
 chaseEnemy :: [Character] -> [Character] -> Character -> [Character]
 chaseEnemy chars done p = case chars of
