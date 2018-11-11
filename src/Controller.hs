@@ -48,6 +48,7 @@ enemyshoottime [] _ = []
 enemyshoottime [a] secs = [a { shootTimer = shootTimer a + secs }]
 enemyshoottime (a:as) secs = a { shootTimer = shootTimer a + secs } : enemyshoottime as secs
 
+-- checks if the enemies are allowed to shoot and if they are it will add a new projectile to the list it returns
 enemyshoot :: [Character] -> [Projectile]
 enemyshoot [] = []
 enemyshoot [c] | shootTimer c >= 1 = [Projectile ((cpos c){x = x (cpos c) - 40}) 50 3 (Model.Rectangle 5 5) 0 EnemyO]
@@ -55,7 +56,7 @@ enemyshoot [c] | shootTimer c >= 1 = [Projectile ((cpos c){x = x (cpos c) - 40})
 enemyshoot (c:cs) | shootTimer c >= 1 = Projectile ((cpos c){x = x (cpos c) - 40}) 50 3 (Model.Rectangle 5 5) 0 EnemyO : enemyshoot cs
                   | otherwise           = enemyshoot cs
 
-
+-- resets the timer of when enemies are allowed to shoot                 
 resetEnemyTimer :: [Character] -> [Character]
 resetEnemyTimer [] = []
 resetEnemyTimer [x] | shootTimer x >= 1 = [x {shootTimer = 0}]
@@ -98,6 +99,7 @@ projectilehit' [a] p = boxCollision (s p, ppos p) (shape a, cpos a)
 projectilehit' (a:as) p | boxCollision (s p, ppos p) (shape a, cpos a) = True
                         | otherwise                                    = projectilehit' as p
 
+--helps projectilehit to remove projectiles out a list
 filterlist :: [Projectile] -> [Bool] -> [Projectile]
 filterlist [] _ = []
 filterlist [x] [a] | a         = []
@@ -105,7 +107,7 @@ filterlist [x] [a] | a         = []
 filterlist (x:xs) (a:as) | a         = filterlist xs as
                          | otherwise = x : filterlist xs as
 
-
+-- makes all the projectiles in the game move and makes enemy projectiles move (Left to Right <-) and player projectiles (Right to Left ->)
 moveprojectiles :: [Projectile] -> [Projectile] -> [Projectile]
 moveprojectiles p done = case p of
                          []     -> []
@@ -115,6 +117,7 @@ moveprojectiles p done = case p of
               | traveled c + speed c < 1500 && typeO c == EnemyO  = [c { ppos = (ppos c){ x = x(ppos c) - speed c }, traveled = traveled c + speed c }]
               | otherwise                                         = []
 
+-- makes enemies of type chase move to the position of the player
 chaseEnemy :: [Character] -> [Character] -> Character -> [Character]
 chaseEnemy chars done p = case chars of
                           [] -> []
@@ -128,7 +131,7 @@ chaseEnemy chars done p = case chars of
               | x (cpos c) >= x (cpos p) && y (cpos c) >= y (cpos p) = c { cpos = (cpos c){ x = x(cpos c) - cSpeed c , y = y(cpos c) - cSpeed c } }
               | otherwise = c { cpos = (cpos c){ x = x(cpos c) - cSpeed c } }
 
-
+-- makes normal enemies move up and down till they reach a specific x position (posx)
 normalEnemy :: Float -> [Character] -> [Character] -> [Character]
 normalEnemy posx chars done = case chars of
                              [] -> []
@@ -141,6 +144,7 @@ normalEnemy posx chars done = case chars of
           b c | posx < x (cpos c) = moveUpDown c { cpos = (cpos c){ x = x(cpos c) - cSpeed c } } 
               | otherwise = moveUpDown c
 
+--makes a character move up and down
 moveUpDown :: Character -> Character
 moveUpDown c | up c && y (cpos c) >= 260 = c { cpos = (cpos c){ y = 259 }, up = False } 
              | up c && y (cpos c) < 260 = c { cpos = (cpos c){ y = y(cpos c) + cSpeed c } }
