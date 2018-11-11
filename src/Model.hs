@@ -36,7 +36,7 @@ data GameState = GameState {
                  }
 
 initialState :: [Int] -> GameState
-initialState = GameState 0 (Character (Position (-600) 0) (Rectangle 40 40) 1 2 "Player" 0 0 False PlayerO) level1 [] [] [] [] False True False False
+initialState = GameState 0 (Character (Position (-600) 0) (Rectangle 40 40) 200 2 "Player" 0 0 False PlayerO) level1 [] [] [] [] False True False False
 
 level1 :: [[Character]]
 level1 = [[Character (Position 721 (-100)) (Rectangle 40 40) 20 1.2 "Chase" 0 1 False EnemyO,Character (Position 721 200) (Rectangle 40 40) 20 1.2 "Normal" 0 7 True EnemyO ,Character (Position 750 0) (Rectangle 40 40) 20 1.2 "Chase" 0 6 False EnemyO]]
@@ -48,15 +48,6 @@ removefromList :: Eq a => a -> [a] -> [a]
 removefromList _ []                 = []
 removefromList x (y:ys) | x == y    = removefromList x ys
                     | otherwise = y : removefromList x ys
-
-boxCollision :: (Shape, Position) -> (Shape, Position) -> Bool
-boxCollision (rec1, pos1) (rec2, pos2) = widthcheck && heightcheck
-  where width1 = width rec1
-        height1 = height rec1
-        width2 = width rec2
-        height2 = height rec2
-        widthcheck = x pos1 + width1 / 2 >= x pos2 - width2 /2 && x pos1 - width1 / 2 <= x pos2 + width2 / 2
-        heightcheck = y pos1 + height1 / 2 >= y pos2 - height2 /2 && y pos1 - height1 / 2 <= y pos2 + height2 / 2
 
 wavesCharacter :: [[Character]]
 wavesCharacter = [[Character (Position 740 (-200)) (Rectangle 20 30) 5 1.3 "Chase" 0 1 False EnemyO,
