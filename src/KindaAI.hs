@@ -47,12 +47,12 @@ enemyshoottime (a:as) secs = a { shootTimer = shootTimer a + secs } : enemyshoot
 -- checks if the enemies are allowed to shoot and if they are it will add a new projectile to the list it returns
 enemyshoot :: [Character] -> Float -> [Projectile]
 enemyshoot [] _ = []
-enemyshoot [c] time | shootTimer c >= 1 = [Projectile ((cpos c){x = x (cpos c) - 40}) 30 scaledmg (Model.Rectangle 5 5) 0 EnemyO]
+enemyshoot [c] time | shootTimer c >= 1 = [Projectile ((cpos c){x = x (cpos c) - 40}) scaledmg 3  (Model.Rectangle 5 5) 0 EnemyO]
                     | otherwise           = []
-    where scaledmg = 3 + 3 / 60 * time
-enemyshoot (c:cs) time | shootTimer c >= 1 = Projectile ((cpos c){x = x (cpos c) - 40}) 30 scaledmg (Model.Rectangle 5 5) 0 EnemyO : enemyshoot cs time
+    where scaledmg = 30 + 5 / 20 * time
+enemyshoot (c:cs) time | shootTimer c >= 1 = Projectile ((cpos c){x = x (cpos c) - 40}) scaledmg 3 (Model.Rectangle 5 5) 0 EnemyO : enemyshoot cs time
                        | otherwise           = enemyshoot cs time
-    where scaledmg = 3 + 3 / 60 * time                   
+    where scaledmg = 30 + 5 / 20 * time                   
 
 -- resets the timer of when enemies are allowed to shoot                   
 resetEnemyTimer :: [Character] -> [Character]
