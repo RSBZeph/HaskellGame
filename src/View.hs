@@ -5,10 +5,11 @@ module View where
 import Graphics.Gloss
 import Model
 
-view :: GameState -> IO Picture
-view gstate | mainmenu gstate  = return (pictures [translate (-200) 0 (scale 0.25 0.25 (color red (Text "Press I to start"))), translate (-200) (-200) (scale 0.25 0.25 (color red (Text "Press O to view highscores")))])
-            | scoremenu gstate = return (pictures [translate (-200) 0 (scale 0.25 0.25 (color red (Text "Press O to return to menu")))])
-            | otherwise        = return (pictures [viewenemies, viewplayer, viewprojectiles, viewpause, viewdead, viewscore, viewhealth])
+view ::  [String] -> GameState -> IO Picture
+view highscores gstate | mainmenu gstate  = return (pictures [translate (-200) 0 (scale 0.25 0.25 (color red (Text "Press I to start"))), translate (-200) (-200) (scale 0.25 0.25 (color red (Text "Press O to view highscores"))),translate (-500) 200 (color red (Text "Shoot 'em up game"))])
+                       | scoremenu gstate = return (pictures [translate (-100) 200 (scale 0.25 0.25 (color red (Text "Press O to return to menu"))), viewhighscores])
+                       | gameover gstate  = return (pictures [translate (-200) 0 (scale 0.25 0.25 (color red (Text "Press O to return to menu"))),translate (-500) 200 (color red (Text "Game over")), viewenemies, viewplayer, viewprojectiles, viewpause, viewdead, viewscore])
+                       | otherwise        = return (pictures [viewenemies, viewplayer, viewprojectiles, viewpause, viewdead, viewscore, viewhealth])
     where viewplayer = viewPlayer gstate
           viewenemies = pictures (map ctoPicture (currentenemies gstate))
           viewprojectiles = pictures (map ptoPicture (projectiles gstate))
@@ -17,6 +18,11 @@ view gstate | mainmenu gstate  = return (pictures [translate (-200) 0 (scale 0.2
           viewdead = viewDead (explosions gstate)
           viewscore = translate (-690) 235 (scale 0.5 0.5 (color red (Text (show (score (player gstate))))))
           viewhealth = translate (-690) (-290) (scale 0.3 0.3 (color red (Text ("HP : " ++ (show (health (player gstate)))))))
+          viewhighscores = pictures (viewHighscores highscores 0)
+
+viewHighscores :: [String] -> Int -> [Picture]
+viewHighscores s i | i < length s = translate 0 (150 - 50 * fromIntegral i) (scale 0.25 0.25 (color red (Text (s!!i)))) : viewHighscores s (i + 1)
+                   | otherwise    = []
 
 viewPlayer :: GameState -> Picture
 viewPlayer gstate = case shape (player gstate) of
@@ -41,5 +47,4 @@ ctoPicture c = case shape c of
 
 ptoPicture :: Projectile -> Picture
 ptoPicture p = case s p of
-  Model.Rectangle a b -> translate (x (ppos p)) (y (ppos p)) (color red (scale (b/a) 1 (Circle a)))
-    
+  Model.Rectangle a b -> translate (x (ppos p)) (y (ppos p)) (color red (scale (b/a) 1 (Circle a)))    
