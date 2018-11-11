@@ -3,6 +3,7 @@ module Main where
 import Controller
 import Model
 import View
+import KeyInputs
 
 import Graphics.Gloss.Interface.IO.Game
 
