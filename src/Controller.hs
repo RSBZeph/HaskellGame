@@ -5,18 +5,16 @@ module Controller where
 import Model
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
-import System.Random
 import Data.List
 import KeyInputs
 
-
 -- | Handle one iteration of the game (update)
-step :: Float -> GameState -> IO GameState
-step secs gstate | paused gstate || mainmenu gstate || scoremenu gstate || gameover gstate = return gstate --only update the game if you're out of the menus
-                 | elapsedTime gstate > wavetime       =
-                   return $ updategstate { elapsedTime = elapsedTime updategstate - wavetime, waves = newwvs gstate, currentenemies = newce updategstate } -- add a wave after a certain period of time
-                 | otherwise                           =
-                   return updategstate
+step :: [Int] -> Float -> GameState -> IO GameState
+step wavenrs secs gstate | paused gstate || mainmenu gstate || scoremenu gstate || gameover gstate = return gstate --only update the game if you're out of the menus
+                         | elapsedTime gstate > wavetime       =
+                           return $ updategstate { elapsedTime = elapsedTime updategstate - wavetime, waves = newwvs gstate, currentenemies = newce updategstate } -- add a wave after a certain period of time
+                         | otherwise                           =
+                           return updategstate
     where 
           updatetime = gstate { player = (player gstate) { shootTimer = shootTimer (player gstate) + secs }, currentenemies = enemyshoottime (currentenemies gstate) secs, explosions = explosiontime (explosions gstate) secs  }
           updateinput = updateInputDown updatetime { player = (player updatetime) { shootTimer = shootTimer (player updatetime) + secs }, projectiles = moveprojectiles (projectiles gstate) [] }
@@ -25,7 +23,7 @@ step secs gstate | paused gstate || mainmenu gstate || scoremenu gstate || gameo
           updateproj = projectilehit (projectiles updateshootenemy) (currentenemies updateshootenemy)
           updatedead = addDead (updateshootenemy { currentenemies = updateenemies})
           updatechase = chaseEnemy (currentenemies updatedead) [] (player updateshootenemy) 
-          updatenormalchar = normalEnemy (-100) updatechase []
+          updatenormalchar = normalEnemy 100 updatechase []
           updateplayer = playerhit updateshootenemy { projectiles = updateproj }
           updategstate = gstate{ elapsedTime = elapsedTime gstate + secs, currentenemies = updatenormalchar, player = player updateplayer, projectiles = projectiles updateplayer, explosions = explosions updatedead, gameover = health (player gstate) <= 0 } 
 
@@ -51,17 +49,17 @@ enemyshootgstate gstate = gstate {currentenemies = resetEnemyTimer (currentenemi
 
 enemyshoot :: [Character] -> [Projectile]
 enemyshoot [] = []
-enemyshoot [c] | shootTimer c >= 0.8 = [Projectile ((cpos c){x = x (cpos c) - 40}) 50 3 (Model.Rectangle 5 5) 0 EnemyO]
+enemyshoot [c] | shootTimer c >= 1 = [Projectile ((cpos c){x = x (cpos c) - 40}) 50 3 (Model.Rectangle 5 5) 0 EnemyO]
                | otherwise           = []
-enemyshoot (c:cs) | shootTimer c >= 0.8 = Projectile ((cpos c){x = x (cpos c) - 40}) 50 3 (Model.Rectangle 5 5) 0 EnemyO : enemyshoot cs
+enemyshoot (c:cs) | shootTimer c >= 1 = Projectile ((cpos c){x = x (cpos c) - 40}) 50 3 (Model.Rectangle 5 5) 0 EnemyO : enemyshoot cs
                   | otherwise           = enemyshoot cs
 
 
 resetEnemyTimer :: [Character] -> [Character]
 resetEnemyTimer [] = []
-resetEnemyTimer [x] | shootTimer x >= 0.8 = [x {shootTimer = 0}]
+resetEnemyTimer [x] | shootTimer x >= 1 = [x {shootTimer = 0}]
                     | otherwise           = [x]
-resetEnemyTimer (x:xs) | shootTimer x >= 0.8 = x {shootTimer = 0} : resetEnemyTimer xs
+resetEnemyTimer (x:xs) | shootTimer x >= 1 = x {shootTimer = 0} : resetEnemyTimer xs
                        | otherwise           = x : resetEnemyTimer xs
 
 newce :: GameState -> [Character]
