@@ -45,17 +45,17 @@ enemyshootgstate gstate = gstate {currentenemies = resetEnemyTimer (currentenemi
 
 enemyshoot :: [Character] -> [Projectile]
 enemyshoot [] = []
-enemyshoot [c] | shootTimer c >= 0.5 = Projectile ((cpos c){x = x (cpos c) - 40}) 50 3 (Model.Rectangle 5 5) 0 EnemyO : []
+enemyshoot [c] | shootTimer c >= 0.8 = Projectile ((cpos c){x = x (cpos c) - 40}) 50 3 (Model.Rectangle 5 5) 0 EnemyO : []
                | otherwise           = []
-enemyshoot (c:cs) | shootTimer c >= 0.5 = Projectile ((cpos c){x = x (cpos c) - 40}) 50 3 (Model.Rectangle 5 5) 0 EnemyO : enemyshoot cs
+enemyshoot (c:cs) | shootTimer c >= 0.8 = Projectile ((cpos c){x = x (cpos c) - 40}) 50 3 (Model.Rectangle 5 5) 0 EnemyO : enemyshoot cs
                   | otherwise           = enemyshoot cs
 
 
 resetEnemyTimer :: [Character] -> [Character]
 resetEnemyTimer [] = []
-resetEnemyTimer [x] | shootTimer x >= 0.5 = x {shootTimer = 0} : []
+resetEnemyTimer [x] | shootTimer x >= 0.8 = x {shootTimer = 0} : []
                     | otherwise           = [x]
-resetEnemyTimer (x:xs) | shootTimer x >= 0.5 = x {shootTimer = 0} : resetEnemyTimer xs
+resetEnemyTimer (x:xs) | shootTimer x >= 0.8 = x {shootTimer = 0} : resetEnemyTimer xs
                        | otherwise           = x : resetEnemyTimer xs
 
 --enemyshoot [] = []
@@ -150,7 +150,7 @@ updateInputDown gstate | 'w' `elem` pg = updateInputDown gstate { player = (play
                        | 's' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ y = py - 2 } }, pressed = removefromList 's' pg }
                        | 'd' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px + 2 } }, pressed = removefromList 'd' pg }
                        | 'j' `elem` pg && shootTimer (player gstate) >= 0.3 = gstate 
-                       { player = (player gstate) { shootTimer = 0 }, projectiles = Projectile ((cpos (player gstate)){x = 20 + x (cpos (player gstate))}) 2 3 (Model.Rectangle 5 5) 0 PlayerO : projectiles gstate, pressed = removefromList 'j' pg }
+                       { player = (player gstate) { shootTimer = 0 }, projectiles = Projectile ((cpos (player gstate)){x = 40 + x (cpos (player gstate))}) 2 3 (Model.Rectangle 5 5) 0 PlayerO : projectiles gstate, pressed = removefromList 'j' pg }
                        
                        | otherwise                 = gstate
     where px = x (cpos (player gstate))

@@ -8,7 +8,7 @@ import Model
 view :: GameState -> IO Picture
 view gstate | mainmenu gstate  = return (pictures [translate (-200) 0 (scale 0.25 0.25 (color red (Text "Press I to start"))), translate (-200) (-200) (scale 0.25 0.25 (color red (Text "Press O to view highscores")))])
             | scoremenu gstate = return (pictures [translate (-200) 0 (scale 0.25 0.25 (color red (Text "Press O to return to menu")))])
-            | otherwise        = return (pictures [viewenemies, viewplayer, viewprojectiles, viewpause, viewdead, viewscore])
+            | otherwise        = return (pictures [viewenemies, viewplayer, viewprojectiles, viewpause, viewdead, viewscore, viewhealth])
     where viewplayer = viewPlayer gstate
           viewenemies = pictures (map ctoPicture (currentenemies gstate))
           viewprojectiles = pictures (map ptoPicture (projectiles gstate))
@@ -16,6 +16,7 @@ view gstate | mainmenu gstate  = return (pictures [translate (-200) 0 (scale 0.2
                     | otherwise     = Blank
           viewdead = viewDead (explosions gstate)
           viewscore = translate (-690) 235 (scale 0.5 0.5 (color red (Text (show (score (player gstate))))))
+          viewhealth = translate (-690) (-290) (scale 0.3 0.3 (color red (Text ("HP : " ++ (show (health (player gstate)))))))
 
 viewPlayer :: GameState -> Picture
 viewPlayer gstate = case shape (player gstate) of
