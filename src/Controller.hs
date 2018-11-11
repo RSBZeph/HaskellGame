@@ -11,7 +11,7 @@ import Data.List
 
 -- | Handle one iteration of the game (update)
 step :: Float -> GameState -> IO GameState
-step secs gstate | paused gstate || mainmenu gstate || scoremenu gstate = return gstate --only update the game if you're out of the menus
+step secs gstate | paused gstate || mainmenu gstate || scoremenu gstate || gameover gstate = return gstate --only update the game if you're out of the menus
                  | elapsedTime gstate > wavetime       =
                    return $ updategstate { elapsedTime = elapsedTime updategstate - wavetime, waves = newwvs gstate, currentenemies = newce updategstate } -- add a wave after a certain period of time
                  | otherwise                           =
@@ -24,7 +24,7 @@ step secs gstate | paused gstate || mainmenu gstate || scoremenu gstate = return
           updatedead = addDead (updateinput { currentenemies = updatechar})
           updatechase = chaseEnemy (currentenemies updatedead) [] (player updateinput) 
           updatenormalchar = normalEnemy (-100) updatechase []
-          updategstate = gstate{ elapsedTime = elapsedTime gstate + secs, currentenemies = updatenormalchar, player = player updateinput, projectiles = updateproj, explosions = explosions updatedead } 
+          updategstate = gstate{ elapsedTime = elapsedTime gstate + secs, currentenemies = updatenormalchar, player = (player updateinput) { score = score (player updatedead), health = health (player updateinput) }, projectiles = updateproj, explosions = explosions updatedead, gameover = health (player gstate) <= 0 } 
              
 
 explosiontime :: [Explosion] -> Float -> [Explosion]
@@ -116,23 +116,6 @@ chaseEnemy chars done p = case chars of
               | otherwise = c { cpos = (cpos c){ x = x(cpos c) - cSpeed c } }
 
 
---if a button is pressed, it gets added to the 'pressed' list in gamestate
---if the button is no longer pressed, it gets removed from the list
---this method checks which buttons are held down so that their effects (moving, shooting, etc.) may be repeated over several frames
---instead of only applying on the frame in which the button initially was pressed
-updateInputDown :: GameState -> GameState
-updateInputDown gstate | 'w' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ y = py + 2 } }, pressed = removefromList 'w' pg }
-                       | 'a' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px - 2 } }, pressed = removefromList 'a' pg }
-                       | 's' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ y = py - 2 } }, pressed = removefromList 's' pg }
-                       | 'd' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px + 2 } }, pressed = removefromList 'd' pg }
-                       | 'j' `elem` pg && shootTimer (player gstate) >= 0.3 = gstate 
-                       { player = (player gstate) { shootTimer = 0 }, projectiles = Projectile ((cpos (player gstate)){x = 20 + x (cpos (player gstate))}) 2 3 (Model.Rectangle 5 5) 0 : projectiles gstate, pressed = removefromList 'j' pg }
-                       
-                       | otherwise                 = gstate
-    where px = x (cpos (player gstate))
-          py = y (cpos (player gstate))
-          pg = pressed gstate
-
 normalEnemy :: Float -> [Character] -> [Character] -> [Character]
 normalEnemy posx chars done = case chars of
                              [] -> []
@@ -146,23 +129,40 @@ normalEnemy posx chars done = case chars of
               | otherwise = moveUpDown c
 
 moveUpDown :: Character -> Character
-moveUpDown c | up c == True && y (cpos c) >= 260 = c { cpos = (cpos c){ y = 259 }, up = False } 
-             | up c == True && y (cpos c) < 260 = c { cpos = (cpos c){ y = y(cpos c) + cSpeed c } }
-             | up c == False && y (cpos c) <= (-260) = c { cpos = (cpos c){ y = (-259) }, up = True }
+moveUpDown c | up c && y (cpos c) >= 260 = c { cpos = (cpos c){ y = 259 }, up = False } 
+             | up c && y (cpos c) < 260 = c { cpos = (cpos c){ y = y(cpos c) + cSpeed c } }
+             | not(up c) && y (cpos c) <= (-260) = c { cpos = (cpos c){ y = -259 }, up = True }
              | otherwise = c { cpos = (cpos c){ y = y(cpos c) - cSpeed c } }
 
 
-
-
 -- | Handle user input
+
+--if a button is pressed, it gets added to the 'pressed' list in gamestate
+--if the button is no longer pressed, it gets removed from the list
+--this method checks which buttons are held down so that their effects (moving, shooting, etc.) may be repeated over several frames
+--instead of only applying on the frame in which the button initially was pressed
+updateInputDown :: GameState -> GameState
+updateInputDown gstate | 'w' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ y = py + 2 } }, pressed = removefromList 'w' pg }
+                       | 'a' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px - 2 } }, pressed = removefromList 'a' pg }
+                       | 's' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ y = py - 2 } }, pressed = removefromList 's' pg }
+                       | 'd' `elem` pg = updateInputDown gstate { player = (player gstate) { cpos = (cpos (player gstate)){ x = px + 2 } }, pressed = removefromList 'd' pg }
+                       | 'j' `elem` pg && shootTimer (player gstate) >= 0.3 = gstate 
+                       { player = (player gstate) { shootTimer = 0, health = -100 }, projectiles = Projectile ((cpos (player gstate)){x = 20 + x (cpos (player gstate))}) 2 3 (Model.Rectangle 5 5) 0 : projectiles gstate, pressed = removefromList 'j' pg }
+                       
+                       | otherwise                 = gstate
+    where px = x (cpos (player gstate))
+          py = y (cpos (player gstate))
+          pg = pressed gstate
+
 input :: Event -> GameState -> IO GameState
 input e gstate = return (inputKey e gstate)
 
 inputKey :: Event -> GameState -> GameState
 inputKey event@(EventKey (Char c) keystate _ _) gstate | mainmenu gstate     = geti event gstate --if you're in the main menu, only check i and o
-                                                       | scoremenu gstate    = geto event gstate 
-                                                       | not (paused gstate) = getw event gstate
-                                                       | otherwise           = getp event gstate --if the game is paused, only check if the player is unpausing or not
+                                                       | scoremenu gstate    = geto event gstate
+                                                       | gameover gstate   = geto event gstate 
+                                                       | paused gstate       = getp event gstate
+                                                       | otherwise           = getw event gstate --if the game is paused, only check if the player is unpausing or not
 inputKey _ gstate = gstate -- Otherwise keep the same
 
 getw :: Event -> GameState -> GameState
@@ -214,5 +214,7 @@ geti event@(EventKey (Char c) keystate _ _) gstate = geto event newstate
 
 geto :: Event -> GameState -> GameState
 geto event@(EventKey (Char c) keystate _ _) gstate = newstate
-    where newstate | c == 'o' && keystate == Down = gstate { scoremenu = not (scoremenu gstate), mainmenu = not (mainmenu gstate) }
-                   | otherwise                    = gstate     
+    where newstate | c == 'o' && keystate == Down = check
+                   | otherwise                    = gstate    
+          check | gameover gstate = gstate { mainmenu = True, gameover = False }
+                | otherwise         = gstate { scoremenu = not (scoremenu gstate), mainmenu = not (mainmenu gstate) } 

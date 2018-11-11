@@ -23,11 +23,12 @@ data GameState = GameState {
                  , projectiles    :: [Projectile]
                  , paused         :: Bool
                  , mainmenu       :: Bool
-                 , scoremenu      :: Bool                
+                 , scoremenu      :: Bool   
+                 , gameover       :: Bool             
                  }
 
 initialState :: GameState
-initialState = GameState 0 (Character (Position (-600) 0) (Rectangle 40 40) 300 2 "Player" 0 0 False) level1 [] [] [] [] False True False
+initialState = GameState 0 (Character (Position (-600) 0) (Rectangle 40 40) 300 2 "Player" 0 0 False) level1 [] [] [] [] False True False False
 
 level1 :: [[Character]]
 level1 = [[Character (Position 721 (-100)) (Rectangle 40 40) 1 1.8 "Chase" 0 5 False,Character (Position 721 200) (Rectangle 40 40) 40 1.8 "Normal" 0 7 True],[Character (Position 721 (0)) (Rectangle 40 40) 10 1.8 "Chase" 0 6 False]]
