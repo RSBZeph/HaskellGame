@@ -27,7 +27,7 @@ step secs gstate | paused gstate || mainmenu gstate || scoremenu gstate || gameo
           updatechase = chaseEnemy (currentenemies updatedead) [] (player updateshootenemy) 
           updatenormalchar = normalEnemy 0 updatechase []
           updateplayer = playerhit updateshootenemy { projectiles = updateproj }
-          updategstate = gstate{ elapsedTime = elapsedTime gstate + secs, currentenemies = updatenormalchar, player = player updateplayer, projectiles = projectiles updateplayer, explosions = explosions updatedead, gameover = health (player gstate) <= 0 } 
+          updategstate = gstate{ elapsedTime = elapsedTime gstate + secs, currentenemies = updatenormalchar, player = (player updateplayer) { score = score (player updatedead) }, projectiles = projectiles updateplayer, explosions = explosions updatedead, gameover = health (player gstate) <= 0 } 
 
 
 --checks if the explosion is done and if not then it adds time to the timer
