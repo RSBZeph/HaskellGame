@@ -14,7 +14,7 @@ import KindaAi
 step :: Float -> GameState -> IO GameState
 step secs gstate | paused gstate || mainmenu gstate || scoremenu gstate || gameover gstate = return gstate --only update the game if you're out of the menus
                  | null (currentenemies gstate) =
-                   return $ updategstate { currentenemies = currentenemies updategstate ++ choseWave a, wavenumbers = as } -- add a wave after a certain period of time
+                   return $ updategstate { currentenemies = currentenemies updategstate ++ choseWave a, wavenumbers = as } -- add a wave after the last one has been defeated
                  | otherwise                    = return updategstate
     where 
           (a:as) = wavenumbers gstate

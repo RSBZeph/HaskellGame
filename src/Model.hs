@@ -16,18 +16,18 @@ wavetime :: Float
 wavetime = 7
 
 data GameState = GameState {
-                   elapsedTime    :: Float
-                 , player         :: Character
-                 , waves          :: [[Character]]
-                 , currentenemies :: [Character]
-                 , explosions     :: [Explosion]
-                 , pressed        :: [Char]
-                 , projectiles    :: [Projectile]
-                 , paused         :: Bool
-                 , mainmenu       :: Bool
-                 , scoremenu      :: Bool   
-                 , gameover       :: Bool
-                 , wavenumbers    :: [Int]             
+                   elapsedTime    :: Float          --elapsed time since the start of a new game
+                 , player         :: Character      --the character controlled by the player
+                 , waves          :: [[Character]]  --a list of all the possible combinations of enemies that can come at you at once
+                 , currentenemies :: [Character]    --all enemies currently on screen
+                 , explosions     :: [Explosion]    --all explosions of recently deceased enemies
+                 , pressed        :: [Char]         --a list of all the buttons that are held down during a single frame
+                 , projectiles    :: [Projectile]   --all projectiles on screen
+                 , paused         :: Bool           --is the game paused?
+                 , mainmenu       :: Bool           --are we in the main menu?
+                 , scoremenu      :: Bool           --are we in the score menu?
+                 , gameover       :: Bool           --is the player dead?
+                 , wavenumbers    :: [Int]          --a infinite list of random Ints which is used as index to chose the next wave from the waves list   
                  }
 
 initialState :: [Int] -> GameState
