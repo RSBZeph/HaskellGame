@@ -25,7 +25,7 @@ step secs gstate | paused gstate || mainmenu gstate || scoremenu gstate || gameo
           updateproj = projectilehit (projectiles updateshootenemy) (currentenemies updateshootenemy)
           updatedead = addDead (updateshootenemy { currentenemies = updateenemies})
           updatechase = chaseEnemy (currentenemies updatedead) [] (player updateshootenemy) 
-          updatenormalchar = normalEnemy 100 updatechase []
+          updatenormalchar = normalEnemy 0 updatechase []
           updateplayer = playerhit updateshootenemy { projectiles = updateproj }
           updategstate = gstate{ elapsedTime = elapsedTime gstate + secs, currentenemies = updatenormalchar, player = player updateplayer, projectiles = projectiles updateplayer, explosions = explosions updatedead, gameover = health (player gstate) <= 0 } 
 
