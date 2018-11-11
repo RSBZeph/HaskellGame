@@ -2,17 +2,12 @@
 --   which represent the state of the game
 module Model where
 
+
 newtype Name = Name String
 data Position = Position {x :: Float, y :: Float}
 data Shape = Rectangle { width :: Float, height :: Float }
 data TypeObject = EnemyO | PlayerO
- deriving (Eq, Ord)
-
---instance Show TypeObject where
- --show enemyO = "Enemy"
- --show playerO = "Player"
- 
-           
+ deriving (Eq, Ord)           
 data Character = Character { cpos :: Position, shape :: Shape, health :: Float, cSpeed :: Float, cType :: String, shootTimer :: Float, score :: Int, up :: Bool, typeOC :: TypeObject }
 data Projectile = Projectile { ppos :: Position, damage :: Float, speed :: Float, s :: Shape, traveled :: Float, typeO :: TypeObject }
 data Explosion = Explosion { epos :: Position, radius :: Float, timer :: Float}

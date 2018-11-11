@@ -3,6 +3,7 @@ module Collision where
 import Model
 import Graphics.Gloss.Interface.IO.Game
 
+
 --check if two rectangles intersect    
 boxCollision :: (Shape, Position) -> (Shape, Position) -> Bool
 boxCollision (rec1, pos1) (rec2, pos2) = widthcheck && heightcheck
@@ -13,6 +14,7 @@ boxCollision (rec1, pos1) (rec2, pos2) = widthcheck && heightcheck
         widthcheck = x pos1 + width1 / 2 >= x pos2 - width2 /2 && x pos1 - width1 / 2 <= x pos2 + width2 / 2
         heightcheck = y pos1 + height1 / 2 >= y pos2 - height2 /2 && y pos1 - height1 / 2 <= y pos2 + height2 / 2
 
+--checks if a player is hit by an enemy projectile        
 playerhit :: GameState -> GameState
 playerhit gstate = gstate { player = a, projectiles = b }
     where [a] = characterhit (projectiles gstate) [player gstate]
@@ -43,7 +45,8 @@ projectilehit' [] _ = False
 projectilehit' [a] p = boxCollision (s p, ppos p) (shape a, cpos a)                                                                                                                                              
 projectilehit' (a:as) p | boxCollision (s p, ppos p) (shape a, cpos a) = True
                         | otherwise                                    = projectilehit' as p
-    
+
+--helps projectilehit to remove projectiles out a list                       
 filterlist :: [Projectile] -> [Bool] -> [Projectile]
 filterlist [] _ = []
 filterlist [x] [a] | a         = []

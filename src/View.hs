@@ -5,6 +5,7 @@ module View where
 import Graphics.Gloss
 import Model
 
+
 view ::  [String] -> GameState -> IO Picture
 view highscores gstate | mainmenu gstate  = return (pictures [translate (-200) 0 (scale 0.25 0.25 (color red (Text "Press I to start"))), translate (-200) (-200) (scale 0.25 0.25 (color red (Text "Press O to view highscores"))),translate (-650) 200 (color red (Text "Shoot 'em up game"))])
                        | scoremenu gstate = return (pictures [translate (-100) 200 (scale 0.25 0.25 (color red (Text "Press O to return to menu"))), viewhighscores])

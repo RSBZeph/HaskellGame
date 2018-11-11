@@ -9,6 +9,7 @@ import KeyInputs
 import Collision
 import KindaAi
 
+
 -- | Handle one iteration of the game (update)
 step :: Float -> GameState -> IO GameState
 step secs gstate | paused gstate || mainmenu gstate || scoremenu gstate || gameover gstate = return gstate --only update the game if you're out of the menus
@@ -29,13 +30,13 @@ step secs gstate | paused gstate || mainmenu gstate || scoremenu gstate || gameo
           updategstate = gstate{ elapsedTime = elapsedTime gstate + secs, currentenemies = updatenormalchar, player = player updateplayer, projectiles = projectiles updateplayer, explosions = explosions updatedead, gameover = health (player gstate) <= 0 } 
 
 
+--checks if the explosion is done and if not then it adds time to the timer
 explosiontime :: [Explosion] -> Float -> [Explosion]
 explosiontime [] _ = []
 explosiontime [a] secs | timer a > 2 = []
                        | otherwise   = [a{ timer = timer a + secs }]
 explosiontime (a:as) secs | timer a > 2 = explosiontime as secs
-                          | otherwise   = a{ timer = timer a + secs } : explosiontime as secs
-            
+                          | otherwise   = a{ timer = timer a + secs } : explosiontime as secs            
 
 --if an enemy has <= 0 health, remove it and add it to the explosions list
 addDead :: GameState -> GameState

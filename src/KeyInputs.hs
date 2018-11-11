@@ -1,9 +1,9 @@
+-- | Handle user input
 module KeyInputs where
 
 import Model
 import Graphics.Gloss.Interface.IO.Game
 
--- | Handle user input
 
 --if a button is pressed, it gets added to the 'pressed' list in gamestate
 --if the button is no longer pressed, it gets removed from the list
@@ -27,10 +27,10 @@ input e gstate = return (inputKey e gstate)
 
 inputKey :: Event -> GameState -> GameState
 inputKey event@(EventKey (Char c) keystate _ _) gstate | mainmenu gstate     = geti event gstate --if you're in the main menu, only check i and o
-                                                       | scoremenu gstate    = geto event gstate
-                                                       | gameover gstate   = geto event gstate 
-                                                       | paused gstate       = getp event gstate
-                                                       | otherwise           = getw event gstate --if the game is paused, only check if the player is unpausing or not
+                                                       | scoremenu gstate    = geto event gstate --if you're in the score menu, only check o to return to menu
+                                                       | gameover gstate     = geto event gstate --same story for the gameover menu
+                                                       | paused gstate       = getp event gstate --if the game is paused, only check if the player is unpausing or not
+                                                       | otherwise           = getw event gstate 
 inputKey _ gstate = gstate -- Otherwise keep the same
 
 getw :: Event -> GameState -> GameState

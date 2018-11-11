@@ -5,8 +5,8 @@ import Model
 import View
 import KeyInputs
 import System.Random
-
 import Graphics.Gloss.Interface.IO.Game
+
 
 main :: IO ()
 main = do
