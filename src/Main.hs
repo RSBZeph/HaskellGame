@@ -10,7 +10,7 @@ main :: IO ()
 main = do
        content <- readFile "highscores.txt"
        let highscores = lines content
-       playIO (InWindow "Shoot'em up game" (1400, 600) (0, 0)) -- Or FullScreen
+       playIO (InWindow "Shoot 'em up game" (1400, 600) (0, 0)) -- Or FullScreen
               black            -- Background color
               60               -- Frames per second
               initialState     -- Initial state
